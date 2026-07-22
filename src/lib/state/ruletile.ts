@@ -1,5 +1,6 @@
 import type { Game } from "./game.svelte";
-import { Tile } from "./tile";
+import type { Tile } from "./tile";
+import { AnimatedTile } from "./animatedtile";
 
 // 1 - tile must match
 // 0 - tile must not match
@@ -58,9 +59,7 @@ export interface SpriteResult {
     flipX: boolean;
 }
 
-export abstract class RuleTile extends Tile {
-    public defaultSprite: SpriteCoord | SpriteCoord[] = { x: 0, y: 0 }; 
-    public defaultFrameDuration = 200;
+export abstract class RuleTile extends AnimatedTile {
     protected rules: TileRule[] = [];
 
     public getSprite(game: Game, x: number, y: number, timestamp: number): SpriteResult {
@@ -86,19 +85,6 @@ export abstract class RuleTile extends Tile {
 
         const defaultCoord = this.getAnimatedFrame(this.defaultSprite, timestamp, this.defaultFrameDuration);
         return { x: defaultCoord.x, y: defaultCoord.y, rotationAngle: 0, flipX: false };
-    }
-
-    private getAnimatedFrame(
-        sprite: SpriteCoord | SpriteCoord[], 
-        timestamp: number, 
-        duration: number
-    ): SpriteCoord {
-        if (!Array.isArray(sprite)) {
-            return sprite;
-        }
-
-        const frameIndex = Math.floor(timestamp / duration) % sprite.length;
-        return sprite[frameIndex];
     }
 
     private getPermutations(rule: TileRule) {

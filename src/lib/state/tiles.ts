@@ -1,3 +1,5 @@
+import { AnimatedTile } from './animatedtile';
+import type { Game } from './game.svelte';
 import { RuleTile, type SpriteCoord } from './ruletile';
 import { Tile, type Position, type Entity, StaticTile } from './tile';
 
@@ -22,12 +24,41 @@ export class Empty extends RuleTile {
             },
             {
                 // shoreline
+                // detect when its border and DONT convert to shoreline.
                 pattern: [0, null, null, null, null, null, null],
                 sprite: [
                     { x: 0, y: 0 },
                     { x: 1, y: 0 }
                 ]
-            }
+            },
+            {
+                // inner corner,
+                // doesn't rotate?? fr some reason? (when its a bottom right inner corner, it acts as a top right)
+                
+                pattern: [1, 0, 1, 0, 0, 0, 0, 0],
+                sprite: [
+                    { x: 10, y: 0 },
+                    { x: 11, y: 0 }
+                ],
+                rotations: true,
+            },
+            /**
+             * {
+             *   // TODO: implement shoreline horizontal 
+             *   sprite: [
+             *      { x: 8, y: 0 },
+             *      { x: 9, y: 0 }
+             *  ]
+             * },
+             * {
+             *  // TODO: implement shoreliner corner
+             *  sprite: [
+             *      { x: 14, y: 0 },
+             *      { x: 15, y: 0 }
+             * ]
+             * }
+             * 
+             */
         ]
     }
 }
@@ -38,7 +69,20 @@ export class Ground extends StaticTile {
     }
 }
 
-// export class AnimatedGround extends 
+export class GroundGrass extends AnimatedTile {
+    constructor(id: number) {
+        super(id, "ground-grass");
+
+        this.defaultSprite = [
+            { x: 5, y: 0 },
+            { x: 6, y: 0 }
+        ];
+    }
+
+    public getSprite(_game: Game, _x: number, _y: number, timestamp: number): SpriteCoord {
+        return this.getAnimatedFrame(this.defaultSprite, timestamp, this.defaultFrameDuration);
+    }
+}
 
 export class Wall extends StaticTile {
     constructor(id: number, loc?: SpriteCoord) {
@@ -52,8 +96,10 @@ export class Wall extends StaticTile {
 const TileRegistry: Record<number, () => Tile> = {
     0: () => new Empty(),
     1: () => new Ground(0),
-    2: () => new Wall(1),
+    2: () => new GroundGrass(1),
+    3: () => new Wall(2),
 
+    
     
 };
 

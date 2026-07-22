@@ -70,7 +70,7 @@ export class Game {
         return true; 
     }
 
-    private getDirection(dx: number, dy: number): Direction | null {
+    private getDirection(dx: number, _dy: number): Direction | null {
         if (dx < 0) return 'left';
         if (dx > 0) return 'right';
         return null;
