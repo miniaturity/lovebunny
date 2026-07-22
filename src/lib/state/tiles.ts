@@ -40,9 +40,10 @@ export class Empty extends RuleTile {
             },
             {
                 // inner corner (concave): a single diagonal neighbour is land while
-                // the two cardinals beside it stay open water. Rotations cover all
-                // four diagonals now that the renderer honours rotationAngle.
-                pattern: [1, 0, 1, 0, 0, 0, 0, 0],
+                // the two cardinals beside it stay open water. Base sprite has the
+                // foam in the NE corner (N + E water, NE land); rotations cover the
+                // other three diagonals now that the renderer honours rotationAngle.
+                pattern: [1, 0, 1, null, null, null, null, null],
                 sprite: [
                     { x: 10, y: 0 },
                     { x: 11, y: 0 }
