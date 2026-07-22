@@ -32,7 +32,7 @@ export class Empty extends RuleTile {
                 ]
             },
             {
-                // inner corner,
+                // outer corner (when SAME TILE above and right, but NOT SAME tile top right)
                 // doesn't rotate?? fr some reason? (when its a bottom right inner corner, it acts as a top right)
                 
                 pattern: [1, 0, 1, 0, 0, 0, 0, 0],
@@ -51,7 +51,7 @@ export class Empty extends RuleTile {
              *  ]
              * },
              * {
-             *  // TODO: implement shoreliner corner
+             *  // TODO: implement shoreline inner corner (when NOT SAME TILe is above and right)
              *  sprite: [
              *      { x: 14, y: 0 },
              *      { x: 15, y: 0 }
