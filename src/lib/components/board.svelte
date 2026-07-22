@@ -35,17 +35,42 @@
 
                     const spriteCoord = tile.getSprite(game, x, y, timestamp);
 
-                    ctx.drawImage(
-						tileSheet,
-						spriteCoord.x * SPRITE_SIZE,
-						spriteCoord.y * SPRITE_SIZE,
-						SPRITE_SIZE,
-						SPRITE_SIZE,
-						x * TILE_SIZE,
-						y * TILE_SIZE,
-						TILE_SIZE,
-						TILE_SIZE
-					);
+                    // RuleTile sprites carry rotation/flip so a single sprite can
+                    // serve every orientation; StaticTile sprites fall back to 0/none.
+                    const rotationAngle = 'rotationAngle' in spriteCoord ? spriteCoord.rotationAngle : 0;
+                    const flipX = 'flipX' in spriteCoord ? spriteCoord.flipX : false;
+
+                    if (rotationAngle === 0 && !flipX) {
+                        ctx.drawImage(
+                            tileSheet,
+                            spriteCoord.x * SPRITE_SIZE,
+                            spriteCoord.y * SPRITE_SIZE,
+                            SPRITE_SIZE,
+                            SPRITE_SIZE,
+                            x * TILE_SIZE,
+                            y * TILE_SIZE,
+                            TILE_SIZE,
+                            TILE_SIZE
+                        );
+                    } else {
+                        ctx.save();
+                        // rotate/flip around the tile centre
+                        ctx.translate(x * TILE_SIZE + TILE_SIZE / 2, y * TILE_SIZE + TILE_SIZE / 2);
+                        if (rotationAngle) ctx.rotate((rotationAngle * Math.PI) / 180);
+                        if (flipX) ctx.scale(-1, 1);
+                        ctx.drawImage(
+                            tileSheet,
+                            spriteCoord.x * SPRITE_SIZE,
+                            spriteCoord.y * SPRITE_SIZE,
+                            SPRITE_SIZE,
+                            SPRITE_SIZE,
+                            -TILE_SIZE / 2,
+                            -TILE_SIZE / 2,
+                            TILE_SIZE,
+                            TILE_SIZE
+                        );
+                        ctx.restore();
+                    }
                 }
             }
 
