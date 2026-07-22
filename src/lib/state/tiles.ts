@@ -1,6 +1,6 @@
 import type { Game } from '$lib/state/game.svelte';
+import { RuleTile } from './ruletile';
 
-export const SIZE: number = 16;
 export type Move = -1 | 0 | 1;
 export type Position = { x: number, y: number };
 export type GameStatus = 'playing' | 'won' | 'unfocused' | 'menu';
@@ -28,9 +28,26 @@ export abstract class Tile {
     tick?(game: Game): void;
 }
 
-export class Empty extends Tile {
+export class Empty extends RuleTile {
     constructor() { 
         super(0, "empty"); 
+        this.isPassable = false;
+
+        this.rules = [
+            {
+                // solid
+                pattern: [1, 1, 1, 1, 1, 1, 1, 1],
+                sprite: { x: 2, y: 0 }
+            },
+            {
+                // shoreline
+                pattern: [0, null, null, null, null, null, null],
+                sprite: [
+                    { x: 0, y: 0 },
+                    { x: 1, y: 0 }
+                ]
+            }
+        ]
     }
 }
 
@@ -46,6 +63,8 @@ export class Wall extends Tile {
         this.isPassable = false; 
     }
 }
+
+
 
 
 const TileRegistry: Record<number, () => Tile> = {
@@ -75,7 +94,7 @@ export function mapToBoard(map: number[][]): Tile[][] {
     return grid;
 }
 
-export type Direction = 'down' | 'up' | 'left' | 'right';
+export type Direction = 'left' | 'right';
 
 export interface EntityState {
     id: Entity;
@@ -84,10 +103,8 @@ export interface EntityState {
 }
 
 export const DIRECTION_ROWS: Record<Direction, number> = {
-    down: 0,
     left: 1,
     right: 2,
-    up: 3,
 };
 
 export const ENTITY_SPRITES = {

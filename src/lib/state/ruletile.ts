@@ -15,17 +15,16 @@ const NEIGHBOR_OFFSETS = [
 	{ x: -1, y: 0 },  { x: -1, y: -1 }
 ];
 
+export type SpriteCoord = { x: number; y: number };
+
 export interface TileRule {
-    // SIZE 8
     // N, NE, E, SE, S, SW, W, NW
     pattern: Match[];
-
-    // spritesheet atlas coordinates
-    sprite: { x: number, y: number };
+    sprite: SpriteCoord | SpriteCoord[]; 
+    frameDuration?: number; 
     rotations?: boolean;
     mirrorX?: boolean;
 }
-
 function rotate90(arr: Match[]): Match[] {
     return [
         arr[6], // New N  = Old W
@@ -60,21 +59,24 @@ export interface SpriteResult {
 }
 
 export abstract class RuleTile extends Tile {
-    public defaultSprite = { x: 0, y: 0 }; 
+    public defaultSprite: SpriteCoord | SpriteCoord[] = { x: 0, y: 0 }; 
+    public defaultFrameDuration = 200;
     protected rules: TileRule[] = [];
 
-    public getSprite(game: Game, x: number, y: number): SpriteResult {
+    public getSprite(game: Game, x: number, y: number, timestamp: number): SpriteResult {
         const neighbors = this.getNeighbors(game, x, y);
 
         for (const rule of this.rules) {
-            // generate all permutations for this rule
             const permutations = this.getPermutations(rule);
 
             for (const perm of permutations) {
                 if (this.checkMatch(perm.pattern, neighbors)) {
+                    // Calculate which frame in the animation sequence to display
+                    const coord = this.getAnimatedFrame(rule.sprite, timestamp, rule.frameDuration ?? this.defaultFrameDuration);
+
                     return {
-                        x: rule.sprite.x,
-                        y: rule.sprite.y,
+                        x: coord.x,
+                        y: coord.y,
                         rotationAngle: perm.angle as Rotation,
                         flipX: perm.flipped
                     };
@@ -82,7 +84,21 @@ export abstract class RuleTile extends Tile {
             }
         }
 
-        return { x: this.defaultSprite.x, y: this.defaultSprite.y, rotationAngle: 0, flipX: false };
+        const defaultCoord = this.getAnimatedFrame(this.defaultSprite, timestamp, this.defaultFrameDuration);
+        return { x: defaultCoord.x, y: defaultCoord.y, rotationAngle: 0, flipX: false };
+    }
+
+    private getAnimatedFrame(
+        sprite: SpriteCoord | SpriteCoord[], 
+        timestamp: number, 
+        duration: number
+    ): SpriteCoord {
+        if (!Array.isArray(sprite)) {
+            return sprite;
+        }
+
+        const frameIndex = Math.floor(timestamp / duration) % sprite.length;
+        return sprite[frameIndex];
     }
 
     private getPermutations(rule: TileRule) {
@@ -97,12 +113,11 @@ export abstract class RuleTile extends Tile {
         for (let r = 0; r < maxRotations; r++) {
             results.push({ pattern: currentPattern, angle: currentAngle, flipped: false });
 
-            // If mirrorX is enabled, add the flipped version of this rotation
+            // if mirrorX is enabled, add the flipped version of this rotation
             if (rule.mirrorX) {
                 results.push({ pattern: flipX(currentPattern), angle: currentAngle, flipped: true });
             }
 
-            // Spin 90 degrees for the next iteration
             currentPattern = rotate90(currentPattern);
             currentAngle = (currentAngle + 90) % 360;
         }

@@ -1,13 +1,10 @@
-import { type Position, type Move, type Tile, type GameStatus, SIZE, mapToBoard, type EntityState, type Direction } from "$lib/state/tiles";
+import { type Position, type Move, type Tile, type GameStatus, mapToBoard, type EntityState, type Direction } from "$lib/state/tiles";
 
 export class Game {
     public board = $state<Tile[][]>([]);
-    public a = $state<EntityState>({ id: 'bunny_a', pos: { x: 1, y: 1 }, facing: 'down' });
-    public b = $state<EntityState>({ id: 'bunny_b', pos: { x: 6, y: 5 }, facing: 'down' });
+    public a = $state<EntityState>({ id: 'bunny_a', pos: { x: 1, y: 1 }, facing: 'right' });
+    public b = $state<EntityState>({ id: 'bunny_b', pos: { x: 6, y: 5 }, facing: 'right' });
     public status = $state<GameStatus>('menu');
-
-    width = SIZE;
-    height = SIZE;
 
     constructor(
         initBoard: number[][],
@@ -74,8 +71,6 @@ export class Game {
     }
 
     private getDirection(dx: number, dy: number): Direction | null {
-        if (dy > 0) return 'down';
-        if (dy < 0) return 'up';
         if (dx < 0) return 'left';
         if (dx > 0) return 'right';
         return null;
