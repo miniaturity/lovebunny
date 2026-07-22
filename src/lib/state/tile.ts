@@ -1,5 +1,5 @@
 import type { Game } from '$lib/state/game.svelte';
-import type { SpriteCoord } from './ruletile';
+import type { SpriteCoord, SpriteResult } from './ruletile';
 
 export type Position = { x: number, y: number };
 export type Entity = "fox" | "bunny_a" | "bunny_b";
@@ -27,9 +27,7 @@ export class StaticTile extends Tile {
     constructor(
         public readonly sprite: SpriteCoord, 
         ...p: ConstructorParameters<typeof Tile>) {
-        super(...p);
-
-        
+        super(...p);   
     }
 
     getSprite(_game: Game, _x: number, _y: number, _timestamp: number): SpriteCoord {

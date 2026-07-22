@@ -1,4 +1,4 @@
-import { RuleTile } from './ruletile';
+import { RuleTile, type SpriteCoord } from './ruletile';
 import { Tile, type Position, type Entity, StaticTile } from './tile';
 
 export type Move = -1 | 0 | 1;
@@ -33,14 +33,16 @@ export class Empty extends RuleTile {
 }
 
 export class Ground extends StaticTile {
-    constructor(id: number) { 
-        super({ x: 3, y: 0 }, id, "ground");
+    constructor(id: number, loc?: SpriteCoord) { 
+        super(loc || { x: 3, y: 0 }, id, "ground");
     }
 }
 
+// export class AnimatedGround extends 
+
 export class Wall extends StaticTile {
-    constructor(id: number) {
-        super({ x: 4, y: 0 }, id, "wall");
+    constructor(id: number, loc?: SpriteCoord) {
+        super(loc || { x: 4, y: 0 }, id, "wall");
         this.isPassable = false; 
     }
 }
@@ -51,6 +53,8 @@ const TileRegistry: Record<number, () => Tile> = {
     0: () => new Empty(),
     1: () => new Ground(0),
     2: () => new Wall(1),
+
+    
 };
 
 export function mapToBoard(map: number[][]): Tile[][] {

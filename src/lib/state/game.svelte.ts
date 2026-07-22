@@ -23,11 +23,11 @@ export class Game {
 
         if (direction) {
             this.a.facing = direction;
-            this.b.facing = direction;
+            this.b.facing = direction === "left" ? "right" : "left";
         }
 
         this.moveEntity(this.a, dx, dy);
-        this.moveEntity(this.b, dx, dy);
+        this.moveEntity(this.b, -dx as Move, -dy as Move);
 
         this.triggerGlobalOnMove();
     }
