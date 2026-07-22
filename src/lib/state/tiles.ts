@@ -16,25 +16,32 @@ export class Empty extends RuleTile {
         this.isPassable = false;
         this.defaultSprite = { x: 2, y: 0 };
 
+        // Rules are ordered most-specific -> least-specific: the first match wins.
+        // Corners must come before edges, otherwise a corner tile would match an
+        // edge rule first. Pattern indices are [N, NE, E, SE, S, SW, W, NW] where
+        // 1 = neighbour is water (same tile), 0 = neighbour is NOT water (land /
+        // out-of-bounds), null = don't care.
         this.rules = [
             {
-                // solid
+                // solid: completely surrounded by water -> deep water.
                 pattern: [1, 1, 1, 1, 1, 1, 1, 1],
                 sprite: { x: 2, y: 0 }
             },
             {
-                // shoreline
-                // detect when its border and DONT convert to shoreline.
-                pattern: [0, null, null, null, null, null, null],
+                // outer corner: land on two adjacent cardinal sides with the
+                // opposite sides open water. Base sprite is the top-right corner
+                // (land N + E); rotations produce the other three corners.
+                pattern: [0, 0, 0, null, 1, null, 1, null],
                 sprite: [
-                    { x: 0, y: 0 },
-                    { x: 1, y: 0 }
-                ]
+                    { x: 14, y: 0 },
+                    { x: 15, y: 0 }
+                ],
+                rotations: true,
             },
             {
-                // inner corner,
-                // doesn't rotate?? fr some reason? (when its a bottom right inner corner, it acts as a top right)
-                
+                // inner corner (concave): a single diagonal neighbour is land while
+                // the two cardinals beside it stay open water. Rotations cover all
+                // four diagonals now that the renderer honours rotationAngle.
                 pattern: [1, 0, 1, 0, 0, 0, 0, 0],
                 sprite: [
                     { x: 10, y: 0 },
@@ -42,23 +49,30 @@ export class Empty extends RuleTile {
                 ],
                 rotations: true,
             },
-            /**
-             * {
-             *   // TODO: implement shoreline horizontal 
-             *   sprite: [
-             *      { x: 8, y: 0 },
-             *      { x: 9, y: 0 }
-             *  ]
-             * },
-             * {
-             *  // TODO: implement shoreliner corner
-             *  sprite: [
-             *      { x: 14, y: 0 },
-             *      { x: 15, y: 0 }
-             * ]
-             * }
-             * 
-             */
+            {
+                // horizontal shoreline: land to the east, open water to the west.
+                // mirrorX flips it to also draw the west-facing (left) shoreline.
+                // Requiring the opposite side to be water keeps the map border
+                // (where out-of-bounds counts as land) from becoming a beach.
+                pattern: [null, null, 0, null, null, null, 1, null],
+                sprite: [
+                    { x: 8, y: 0 },
+                    { x: 9, y: 0 }
+                ],
+                mirrorX: true,
+            },
+            {
+                // vertical shoreline: land to the north, open water to the south.
+                // rotations produce the south-facing (bottom) shoreline as well.
+                // As above, requiring the opposite side to be water prevents the
+                // outer map border from converting into a shoreline.
+                pattern: [0, null, null, null, 1, null, null, null],
+                sprite: [
+                    { x: 0, y: 0 },
+                    { x: 1, y: 0 }
+                ],
+                rotations: true,
+            },
         ]
     }
 }
