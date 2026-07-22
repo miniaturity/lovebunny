@@ -1,7 +1,8 @@
 <script lang="ts">
     import { Game } from '$lib/state/game.svelte';
     import { RuleTile } from '$lib/state/ruletile';
-    import { DIRECTION_ROWS, type EntityState } from '$lib/state/tiles';
+    import { StaticTile } from '$lib/state/tile';
+    import { DIRECTION_ROWS, type EntityState, type Move } from '$lib/state/tiles';
     
     let { 
         game, 
@@ -32,23 +33,19 @@
                 for (let x = 0; x < game.board[y].length; x++) {
                     const tile = game.board[y][x];
 
-                    let srcX = 0;
-                    let srcY = 0;
-                    let rotation = 0;
-                    let flipX = false;
+                    const spriteCoord = tile.getSprite(game, x, y, timestamp);
 
-                    if (tile instanceof RuleTile) {
-                        const spriteResult = tile.getSprite(game, x, y, timestamp);
-                        srcX = spriteResult.x;
-                        srcY = spriteResult.y;
-                        rotation = spriteResult.rotationAngle;
-                        flipX = spriteResult.flipX;
-                    } else {
-                        srcX = 0;
-                        srcY = 0;
-                    }
-
-                    drawTile(ctx, tileSheet, x, y, srcX, srcY, rotation, flipX);
+                    ctx.drawImage(
+						tileSheet,
+						spriteCoord.x * SPRITE_SIZE,
+						spriteCoord.y * SPRITE_SIZE,
+						SPRITE_SIZE,
+						SPRITE_SIZE,
+						x * TILE_SIZE,
+						y * TILE_SIZE,
+						TILE_SIZE,
+						TILE_SIZE
+					);
                 }
             }
 
@@ -65,42 +62,6 @@
         };
     });
 
-
-    function drawTile(
-        ctx: CanvasRenderingContext2D, 
-        sheet: HTMLImageElement,
-        boardX: number, boardY: number, 
-        srcCol: number, srcRow: number, 
-        rotationAngle: number, flipX: boolean
-    ) {
-        ctx.save();
-        
-        const destX = boardX * TILE_SIZE;
-        const destY = boardY * TILE_SIZE;
-        
-        const centerX = destX + (TILE_SIZE / 2);
-        const centerY = destY + (TILE_SIZE / 2);
-        ctx.translate(centerX, centerY);
-
-        if (rotationAngle !== 0) {
-            ctx.rotate((rotationAngle * Math.PI) / 180);
-        }
-        if (flipX) {
-            ctx.scale(-1, 1);
-        }
-
-        ctx.drawImage(
-            sheet,
-            srcCol * SPRITE_SIZE, 
-            srcRow * SPRITE_SIZE, 
-            SPRITE_SIZE, SPRITE_SIZE, 
-            -TILE_SIZE / 2, 
-            -TILE_SIZE / 2, 
-            TILE_SIZE, TILE_SIZE
-        );
-
-        ctx.restore();
-    }
 
     function drawEntity(
         ctx: CanvasRenderingContext2D, 
@@ -137,7 +98,32 @@
 
         ctx.restore();
     }
+
+    function keydown(e: KeyboardEvent) {
+        if (e.key === "x") {
+            game.status = 'playing';
+            return;
+        }
+        const keyMap: Record<string, [Move, Move]> = {
+            "ArrowUp": [0, -1],
+            "ArrowLeft": [-1, 0],
+            "ArrowDown": [0, 1],
+            "ArrowRight": [1, 0],
+
+            "w": [0, -1],
+            "a": [-1, 0],
+            "s": [0, 1],
+            "d": [1, 0]
+        }
+
+        const move = keyMap[e.key];
+        if (move) {
+            game.move(move[0], move[1]);
+        }
+    }
 </script>
+
+<svelte:window onkeydown={keydown}/>
 
 <canvas 
     bind:this={canvasRef} 
@@ -148,7 +134,7 @@
 
 <style>
     .game-canvas {
-        border-radius: 8px;
+        width: 100%; height: 100%;
         
         image-rendering: pixelated; 
     }

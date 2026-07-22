@@ -1,37 +1,18 @@
-import type { Game } from '$lib/state/game.svelte';
 import { RuleTile } from './ruletile';
+import { Tile, type Position, type Entity, StaticTile } from './tile';
 
 export type Move = -1 | 0 | 1;
-export type Position = { x: number, y: number };
 export type GameStatus = 'playing' | 'won' | 'unfocused' | 'menu';
-export type Entity = "fox" | "bunny_a" | "bunny_b";
 
-export abstract class Tile {
-    protected _occupant: Entity | "empty" = "empty";
-    public isPassable: boolean = true; 
-    public readonly variant: string;
-
-    constructor(
-        public readonly tileId: number,
-        private readonly _name: string,
-        variant?: string
-    ) {
-        this.variant = variant ?? _name;
-    }
-
-    get name() { return this._name; }
-    get occupant() { return this._occupant; }
-    set occupant(o: Entity | "empty") { this._occupant = o; }
-
-    onLand?(e: Entity, pos: Position, game: Game): void;
-    onMove?(game: Game): void;
-    tick?(game: Game): void;
-}
+// Re-exported so existing imports of Tile/Position/Entity from './tiles' keep working.
+export { Tile };
+export type { Position, Entity };
 
 export class Empty extends RuleTile {
     constructor() { 
         super(0, "empty"); 
         this.isPassable = false;
+        this.defaultSprite = { x: 2, y: 0 };
 
         this.rules = [
             {
@@ -51,26 +32,25 @@ export class Empty extends RuleTile {
     }
 }
 
-export class Ground extends Tile {
-    constructor(id: number, variant: string) { 
-        super(id, "ground", variant);
+export class Ground extends StaticTile {
+    constructor(id: number) { 
+        super({ x: 3, y: 0 }, id, "ground");
     }
 }
 
-export class Wall extends Tile {
-    constructor(id: number, variant: string) {
-        super(id, "wall", variant);
+export class Wall extends StaticTile {
+    constructor(id: number) {
+        super({ x: 4, y: 0 }, id, "wall");
         this.isPassable = false; 
     }
 }
 
 
 
-
 const TileRegistry: Record<number, () => Tile> = {
     0: () => new Empty(),
-    1: () => new Ground(0, "grass"),
-    2: () => new Wall(1, "stone-wall"),
+    1: () => new Ground(0),
+    2: () => new Wall(1),
 };
 
 export function mapToBoard(map: number[][]): Tile[][] {
@@ -86,7 +66,7 @@ export function mapToBoard(map: number[][]): Tile[][] {
                 row.push(createTile());
             } else {
                 console.warn(`Unknown tile ID: ${tileId}`);
-                row.push(new Ground(0, "error-tile"));
+                row.push(new Empty());
             }
         }
         grid.push(row);

@@ -1,5 +1,5 @@
 import type { Game } from "./game.svelte";
-import { Tile } from "./tiles";
+import { Tile } from "./tile";
 
 // 1 - tile must match
 // 0 - tile must not match
@@ -71,7 +71,7 @@ export abstract class RuleTile extends Tile {
 
             for (const perm of permutations) {
                 if (this.checkMatch(perm.pattern, neighbors)) {
-                    // Calculate which frame in the animation sequence to display
+                    // calculate which frame in the animation sequence to display
                     const coord = this.getAnimatedFrame(rule.sprite, timestamp, rule.frameDuration ?? this.defaultFrameDuration);
 
                     return {

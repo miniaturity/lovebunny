@@ -1,0 +1,84 @@
+diff --git a/src/lib/state/ruletile.ts b/src/lib/state/ruletile.ts
+index ff4a531..ab43fcb 100644
+--- a/src/lib/state/ruletile.ts
++++ b/src/lib/state/ruletile.ts
+@@ -1,5 +1,5 @@
+ import type { Game } from "./game.svelte";
+-import { Tile } from "./tiles";
++import { Tile } from "./tile";
+ 
+ // 1 - tile must match
+ // 0 - tile must not match
+diff --git a/src/lib/state/tile.ts b/src/lib/state/tile.ts
+new file mode 100644
+index 0000000..e362689
+--- /dev/null
++++ b/src/lib/state/tile.ts
+@@ -0,0 +1,26 @@
++import type { Game } from '$lib/state/game.svelte';
++
++export type Position = { x: number, y: number };
++export type Entity = "fox" | "bunny_a" | "bunny_b";
++
++export abstract class Tile {
++    protected _occupant: Entity | "empty" = "empty";
++    public isPassable: boolean = true; 
++    public readonly variant: string;
++
++    constructor(
++        public readonly tileId: number,
++        private readonly _name: string,
++        variant?: string
++    ) {
++        this.variant = variant ?? _name;
++    }
++
++    get name() { return this._name; }
++    get occupant() { return this._occupant; }
++    set occupant(o: Entity | "empty") { this._occupant = o; }
++
++    onLand?(e: Entity, pos: Position, game: Game): void;
++    onMove?(game: Game): void;
++    tick?(game: Game): void;
++}
+diff --git a/src/lib/state/tiles.ts b/src/lib/state/tiles.ts
+index 5153593..3709040 100644
+--- a/src/lib/state/tiles.ts
++++ b/src/lib/state/tiles.ts
+@@ -1,32 +1,12 @@
+-import type { Game } from '$lib/state/game.svelte';
+ import { RuleTile } from './ruletile';
++import { Tile, type Position, type Entity } from './tile';
+ 
+ export type Move = -1 | 0 | 1;
+-export type Position = { x: number, y: number };
+ export type GameStatus = 'playing' | 'won' | 'unfocused' | 'menu';
+-export type Entity = "fox" | "bunny_a" | "bunny_b";
+-
+-export abstract class Tile {
+-    protected _occupant: Entity | "empty" = "empty";
+-    public isPassable: boolean = true; 
+-    public readonly variant: string;
+-
+-    constructor(
+-        public readonly tileId: number,
+-        private readonly _name: string,
+-        variant?: string
+-    ) {
+-        this.variant = variant ?? _name;
+-    }
+-
+-    get name() { return this._name; }
+-    get occupant() { return this._occupant; }
+-    set occupant(o: Entity | "empty") { this._occupant = o; }
+ 
+-    onLand?(e: Entity, pos: Position, game: Game): void;
+-    onMove?(game: Game): void;
+-    tick?(game: Game): void;
+-}
++// Re-exported so existing imports of Tile/Position/Entity from './tiles' keep working.
++export { Tile };
++export type { Position, Entity };
+ 
+ export class Empty extends RuleTile {
+     constructor() { 

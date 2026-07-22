@@ -75,5 +75,7 @@ export class Game {
         if (dx > 0) return 'right';
         return null;
     }
+
+    
 }
 
