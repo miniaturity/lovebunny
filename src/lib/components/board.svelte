@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Game } from '$lib/state/game.svelte';
-    import { RuleTile } from '$lib/state/ruletile';
+    import { RuleTile, type Rotation } from '$lib/state/ruletile';
     import { StaticTile } from '$lib/state/tile';
     import { DIRECTION_ROWS, type EntityState, type Move } from '$lib/state/tiles';
     
@@ -37,7 +37,7 @@
 
                     // RuleTile sprites carry rotation/flip so a single sprite can
                     // serve every orientation; StaticTile sprites fall back to 0/none.
-                    const rotationAngle = 'rotationAngle' in spriteCoord ? spriteCoord.rotationAngle : 0;
+                    const rotationAngle = 'rotationAngle' in spriteCoord ? spriteCoord.rotationAngle as Rotation : 0;
                     const flipX = 'flipX' in spriteCoord ? spriteCoord.flipX : false;
 
                     if (rotationAngle === 0 && !flipX) {

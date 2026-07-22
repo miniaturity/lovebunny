@@ -33,8 +33,8 @@ export class Empty extends RuleTile {
                 // (land N + E); rotations produce the other three corners.
                 pattern: [0, 0, 0, null, 1, null, 1, null],
                 sprite: [
-                    { x: 14, y: 0 },
-                    { x: 15, y: 0 }
+                    { x: 10, y: 0 },
+                    { x: 11, y: 0 }
                 ],
                 rotations: true,
             },
@@ -45,8 +45,8 @@ export class Empty extends RuleTile {
                 // other three diagonals now that the renderer honours rotationAngle.
                 pattern: [1, 0, 1, null, null, null, null, null],
                 sprite: [
-                    { x: 10, y: 0 },
-                    { x: 11, y: 0 }
+                    { x: 14, y: 0 },
+                    { x: 15, y: 0 }
                 ],
                 rotations: true,
             },
@@ -72,7 +72,6 @@ export class Empty extends RuleTile {
                     { x: 0, y: 0 },
                     { x: 1, y: 0 }
                 ],
-                rotations: true,
             },
         ]
     }
