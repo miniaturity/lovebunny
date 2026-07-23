@@ -125,11 +125,32 @@ const TileRegistry: Record<number, () => Tile> = {
     
 };
 
+// Every board is automatically padded with a one-tile-wide border of empty
+// tiles on all four sides, so level authors never need to include it
+// themselves. Positions supplied to Game are relative to the original
+// (unpadded) map and are shifted to account for this border.
+export const BOARD_BORDER = 2;
+
 export function mapToBoard(map: number[][]): Tile[][] {
+    const width = map[0]?.length ?? 0;
+    const paddedWidth = width + BOARD_BORDER * 2;
+
     const grid: Tile[][] = [];
+
+    const makeBorderRow = (): Tile[] =>
+        Array.from({ length: paddedWidth }, () => new Empty());
+
+    for (let i = 0; i < BOARD_BORDER; i++) {
+        grid.push(makeBorderRow());
+    }
 
     for (let y = 0; y < map.length; y++) {
         const row: Tile[] = [];
+
+        for (let i = 0; i < BOARD_BORDER; i++) {
+            row.push(new Empty());
+        }
+
         for (let x = 0; x < map[y].length; x++) {
             const tileId = map[y][x];
             const createTile = TileRegistry[tileId]; 
@@ -141,8 +162,18 @@ export function mapToBoard(map: number[][]): Tile[][] {
                 row.push(new Empty());
             }
         }
+
+        for (let i = 0; i < BOARD_BORDER; i++) {
+            row.push(new Empty());
+        }
+
         grid.push(row);
     }
+
+    for (let i = 0; i < BOARD_BORDER; i++) {
+        grid.push(makeBorderRow());
+    }
+
     return grid;
 }
 

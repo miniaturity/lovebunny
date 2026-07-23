@@ -1,4 +1,4 @@
-import { type Position, type Move, type Tile, type GameStatus, mapToBoard, type EntityState, type Direction } from "$lib/state/tiles";
+import { type Position, type Move, type Tile, type GameStatus, mapToBoard, BOARD_BORDER, type EntityState, type Direction } from "$lib/state/tiles";
 
 export class Game {
     public board = $state<Tile[][]>([]);
@@ -12,8 +12,12 @@ export class Game {
         b: Position,
     ) {
         this.board = mapToBoard(initBoard);
-        this.a.pos = a;
-        this.b.pos = b;
+
+        // mapToBoard pads the map with a border of empty tiles, so positions
+        // given here (relative to the original, unpadded map) need to be
+        // shifted by that same border to still land on the intended tile.
+        this.a.pos = { x: a.x + BOARD_BORDER, y: a.y + BOARD_BORDER };
+        this.b.pos = { x: b.x + BOARD_BORDER, y: b.y + BOARD_BORDER };
     }
 
     move(dx: Move, dy: Move) {
