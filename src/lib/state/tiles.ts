@@ -238,12 +238,12 @@ export class Wall extends StaticTile {
 
 
 const TileRegistry: Record<number, () => Tile> = {
-    0: () => new Empty(),
-    1: () => new Ground(0),
-    2: () => new GroundGrass(1),
-    3: () => new Wall(2),
-
-    
+    0: () => new Empty(), // water
+    1: () => new Ground(0), // ground (default)
+    2: () => new GroundGrass(1), // ground (animated grass)
+    3: () => new Wall(2), // defalt wall
+    4: () => new Ground(3, { x: 7, y: 0 }), // ground (flowers)
+    5: () => new Wall(4, { x: 4, y: 2 }) // wall (rocks)
     
 };
 
