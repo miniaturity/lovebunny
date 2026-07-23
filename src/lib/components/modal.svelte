@@ -52,6 +52,20 @@
                 animation: rot 1s steps(2) infinite;
             }
         }
+
+        animation: modal-rot 2.5s steps(2) infinite;
+
+        &:hover {
+            animation: none;
+        }
+    }
+
+    @keyframes modal-rot {
+        0% {
+            transform: rotateZ(1deg);
+        } 100% {
+            transform: rotateZ(-1deg);
+        }
     }
 
     @keyframes rot {

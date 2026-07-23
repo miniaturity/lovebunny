@@ -28,9 +28,17 @@ export class Empty extends RuleTile {
                 sprite: { x: 2, y: 0 }
             },
             {
+                // outer corner: surrounded (wall N)
+                pattern: [0, null, 0, null, 1, 0, 1, null],
+                sprite: [
+                    { x: 12, y: 1 },
+                    { x: 13, y: 1 },
+                ],
+                mirrorX: true
+            },
+            {
                 // outer corner: land on two adjacent cardinal sides with the
-                // opposite sides open water. Base sprite is the top-right corner
-                // (land N + E); rotations produce the other three corners.
+                // opposite sides open water.
                 pattern: [0, null, 0, null, 1, null, 1, null],
                 sprite: [
                     { x: 14, y: 0 },
@@ -39,6 +47,16 @@ export class Empty extends RuleTile {
                 mirrorX: true
             },
             {
+                // outer corner: surrounded (wall non-N)
+                pattern: [1, 0, 1, null, 0, null, 0],
+                sprite: [
+                    { x: 18, y: 1 },
+                    { x: 19, y: 1 }
+                ],
+                mirrorX: true,
+            },
+            {
+                // outer corner: non-north
                 pattern: [1, null, 1, null, 0, null, 0],
                 sprite: [
                     { x: 16, y: 0 },
@@ -47,16 +65,113 @@ export class Empty extends RuleTile {
                 mirrorX: true
             },
             {
-                // inner corner (concave): a single diagonal neighbour is land while
-                // the two cardinals beside it stay open water. Base sprite has the
-                // foam in the NE corner (N + E water, NE land); rotations cover the
-                // other three diagonals now that the renderer honours rotationAngle.
+                // inner corner x4
+                pattern: [1, 0, 1, 0, 1, 0, 1, 0],
+                sprite: [
+                    { x: 4, y: 1 },
+                    { x: 5, y: 1 }
+                ],
+                rotations: true
+            },
+            {
+                // inner corner x2 + wall (north)
+                pattern: [0, null, 1, 0, 1, 0, 1, null],
+                sprite: [
+                    { x: 10, y: 1 },
+                    { x: 11, y: 1 },
+                ],
+                mirrorX: true
+            },
+            {
+                // inner corner x2 + wall (non-north)
+                pattern: [1, 0, 1, null, 0, null, 1, 0],
+                sprite: [
+                    { x: 8, y: 1 },
+                    { x: 9, y: 1 }
+                ],
+                rotations: true
+            },
+            {
+                // inner corner x2
+                pattern: [1, 0, 1, null, null, null, 1, 0],
+                sprite: [
+                    { x: 0, y: 1 },
+                    { x: 1, y: 1 }
+                ],
+                rotations: true
+            },
+            {
+                // inner corner + wall (north)
+                pattern: [0, null, 1, 0, 1, null, 1, null],
+                sprite: [
+                    { x: 2, y: 2 },
+                    { x: 3, y: 2 }
+                ],
+                mirrorX: true
+            },
+            {
+                // inner corner + wall (non-north)
+                pattern: [1, 0, 1, null, 0, null, 1, null],
+                sprite: [
+                    { x: 0, y: 2 },
+                    { x: 1, y: 2 }
+                ],
+                rotations: true
+            },
+            {
+                // inner corner (concave)
                 pattern: [1, 0, 1, null, null, null, null, null],
                 sprite: [
                     { x: 10, y: 0 },
                     { x: 11, y: 0 }
                 ],
                 rotations: true,
+            },
+            {
+                // corridor shoreline: land n/s, water w/e
+                pattern: [0, null, 1, null, 0, null, 1, null],
+                sprite: [
+                    { x: 16, y: 1 },
+                    { x: 17, y: 1 }
+                ],
+                mirrorX: true
+            },
+            {
+                // corridor shoreline: land w/e, water n and s
+                pattern: [1, null, 0, null, 1, null, 0, null],
+                sprite: [
+                    { x: 12, y: 0 },
+                    { x: 13, y: 0 }
+                ],
+                rotations: true,
+            },
+            {
+                // corridor end shoreline (land n),
+                pattern: [0, null, 0, null, 1, null, 0, null],
+                sprite: [
+                    { x: 18, y: 0 },
+                    { x: 19, y: 0 }
+                ],
+                mirrorX: true
+            },
+            {
+                // corridor end shoreline (horizontal, land n)
+                pattern: [0, null, 1, null, 0, null, 0, null],
+                sprite: [
+                    { x: 14, y: 1 },
+                    { x: 15, y: 1 }
+                ],
+                mirrorX: true
+            },
+            {
+                // corridor end shoreline (land w/e/s),
+                pattern: [0, null, 0, null, 1, null, 0, null],
+                sprite: [
+                    { x: 6, y: 1 },
+                    { x: 7, y: 1 }
+                ],
+                rotations: true,
+                initRotation: 270
             },
             {
                 // vertical shoreline: land to the north, open water to the south.
@@ -127,7 +242,7 @@ const TileRegistry: Record<number, () => Tile> = {
     1: () => new Ground(0),
     2: () => new GroundGrass(1),
     3: () => new Wall(2),
-    
+
     
     
 };

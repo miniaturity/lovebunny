@@ -8,8 +8,8 @@
         href,
         onclick
     }: {
-        style: string
         children: Snippet;
+        style?: string;
         href?: string;
         onclick?: () => void;
     } = $props();
@@ -26,5 +26,13 @@
 {/if}
 
 <style lang="scss">
-
+    .btn {
+        padding: 4px 8px;
+        font-family: "Halogen";
+        font-size: 1.3rem;
+        cursor: pointer;
+        border: none;
+        background-color: #000;
+        color: #fff;
+    }
 </style>

@@ -46,6 +46,7 @@ export class Game {
         this.moveEntity(this.a, dx, dy);
         this.moveEntity(this.b, -dx as Move, -dy as Move);
 
+        // if they let me use objects as a key it would be cool and i wouldnt have to do this 
         // WARNING: BS AHEAD
         this.moves.push(((Object.keys(MOVE_DICT) as Array<keyof typeof MOVE_DICT>).find((key) => MOVE_DICT[key].x === dx && MOVE_DICT[key].y === dy))!)
         this.triggerGlobalOnMove();

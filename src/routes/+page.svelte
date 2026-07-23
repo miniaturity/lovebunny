@@ -9,12 +9,13 @@
     import Modal from "$lib/components/modal.svelte";
 
     import love from "$lib/assets/images/love.png";
+    import Button from "$lib/components/button.svelte";
 
     let tileSheet = $state<HTMLImageElement>();
     let characterSheet = $state<HTMLImageElement>();
 
     let isNewUser = $state<boolean>(false);
-    let showModal = $derived<boolean>(true);
+    let showIntroModal = $derived<boolean>(true);
 
     onMount(() => {
         tileSheet = new Image();
@@ -29,14 +30,17 @@
         }
     });
 
-
+    function play() {
+        game.status = "playing";
+        showIntroModal = false;
+    }
 
     let game = $state<Game>(new Game(...DEMO_GAME));
 
     const title = "bunniesin.love";
 </script>
 
-<Modal bind:showModal={showModal}>
+<Modal bind:showModal={showIntroModal}>
     <div class="modal-content">
         <img src={love} alt=""/>
         <header>
@@ -47,10 +51,23 @@
                 <span class="tchar" style={`
                 --index: ${i};
                 --col: #000;
-                --col2: red;`}>{char}</span>
-            {/each} the lover bunnies! their hearts are tethered, so they make the same moves.
+                --col2: var(--water-blue);`}>{char}</span>
+            {/each} the lover bunnies! their 
+            {#each "hearts" as char, i}
+                <span class="tchar" style={`--index: ${i};
+                --col: #000;
+                --col2: red;
+                `}>
+                    {char}
+                </span>
+            {/each}
+            are tethered, so they make the same moves.
         </p>
-        
+        <div class="buttons">
+            <Button onclick={play}>
+                Play
+            </Button>
+        </div>
     </div>
 </Modal>
 
@@ -97,9 +114,10 @@
     }
 
     .modal-content {
-        padding: 8px;
+        --p: 12px;
+        padding: var(--p);
         max-width: 350px;
-        gap: 8px;   
+        gap: var(--p);   
 
         display: flex;
         flex-direction: column;
@@ -117,7 +135,7 @@
         & img {
             width: 100%;
             height: auto;
-            padding: 12px;
+            padding: 24px;
             padding-bottom: 0;
             image-rendering: pixelated;
         }
@@ -179,8 +197,6 @@
             transform: translateY(0px);
         }
     }
-
-    
 
     @keyframes letterfloat {
         0% {

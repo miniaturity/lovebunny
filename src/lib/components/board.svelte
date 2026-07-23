@@ -51,6 +51,8 @@
                             TILE_SIZE,
                             TILE_SIZE
                         );
+
+                        ctx.strokeStyle = ""
                     } else {
                         ctx.save();
                         // rotate/flip around the tile centre
