@@ -1,8 +1,7 @@
 <script lang="ts">
     import { Game } from '$lib/state/game.svelte';
-    import { RuleTile, type Rotation } from '$lib/state/ruletile';
-    import { StaticTile } from '$lib/state/tile';
-    import { DIRECTION_ROWS, type EntityState, type Move } from '$lib/state/tiles';
+    import { type Rotation } from '$lib/state/ruletile';
+    import { type EntityState, type Move } from '$lib/state/tiles';
     
     let { 
         game, 

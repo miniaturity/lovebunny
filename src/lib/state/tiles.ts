@@ -85,6 +85,13 @@ export class Empty extends RuleTile {
     }
 }
 
+export class StaticEmpty extends StaticTile {
+    constructor() {
+        super({ x: 2, y: 0 }, 0, "empty");
+        this.isPassable = false;
+    }
+}
+
 export class Ground extends StaticTile {
     constructor(id: number, loc?: SpriteCoord) { 
         super(loc || { x: 3, y: 0 }, id, "ground");
@@ -125,53 +132,51 @@ const TileRegistry: Record<number, () => Tile> = {
     
 };
 
-// Every board is automatically padded with a one-tile-wide border of empty
-// tiles on all four sides, so level authors never need to include it
-// themselves. Positions supplied to Game are relative to the original
-// (unpadded) map and are shifted to account for this border.
 export const BOARD_BORDER = 2;
 
 export function mapToBoard(map: number[][]): Tile[][] {
-    const width = map[0]?.length ?? 0;
-    const paddedWidth = width + BOARD_BORDER * 2;
+    const mapHeight = map.length;
+    const mapWidth = map[0]?.length ?? 0;
+    
+    const paddedHeight = mapHeight + BOARD_BORDER * 2;
+    const paddedWidth = mapWidth + BOARD_BORDER * 2;
 
     const grid: Tile[][] = [];
 
-    const makeBorderRow = (): Tile[] =>
-        Array.from({ length: paddedWidth }, () => new Empty());
-
-    for (let i = 0; i < BOARD_BORDER; i++) {
-        grid.push(makeBorderRow());
-    }
-
-    for (let y = 0; y < map.length; y++) {
+    for (let y = 0; y < paddedHeight; y++) {
         const row: Tile[] = [];
-
-        for (let i = 0; i < BOARD_BORDER; i++) {
-            row.push(new Empty());
-        }
-
-        for (let x = 0; x < map[y].length; x++) {
-            const tileId = map[y][x];
-            const createTile = TileRegistry[tileId]; 
+        for (let x = 0; x < paddedWidth; x++) {
             
-            if (createTile) {
-                row.push(createTile());
-            } else {
-                console.warn(`Unknown tile ID: ${tileId}`);
+            // calculate chebyshev distance from the actual map boundaries
+            let dx = 0;
+            if (x < BOARD_BORDER) dx = BOARD_BORDER - x;
+            else if (x >= BOARD_BORDER + mapWidth) dx = x - (BOARD_BORDER + mapWidth - 1);
+
+            let dy = 0;
+            if (y < BOARD_BORDER) dy = BOARD_BORDER - y;
+            else if (y >= BOARD_BORDER + mapHeight) dy = y - (BOARD_BORDER + mapHeight - 1);
+
+            const distance = Math.max(dx, dy);
+
+            if (distance === 0) {
+                const mapY = y - BOARD_BORDER;
+                const mapX = x - BOARD_BORDER;
+                const tileId = map[mapY][mapX];
+                const createTile = TileRegistry[tileId]; 
+                
+                if (createTile) {
+                    row.push(createTile());
+                } else {
+                    console.warn(`Unknown tile ID: ${tileId}`);
+                    row.push(new Empty());
+                }
+            } else if (distance === 1) {
                 row.push(new Empty());
+            } else {
+                row.push(new StaticEmpty());
             }
         }
-
-        for (let i = 0; i < BOARD_BORDER; i++) {
-            row.push(new Empty());
-        }
-
         grid.push(row);
-    }
-
-    for (let i = 0; i < BOARD_BORDER; i++) {
-        grid.push(makeBorderRow());
     }
 
     return grid;
