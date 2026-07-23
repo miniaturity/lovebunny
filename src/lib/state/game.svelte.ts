@@ -1,15 +1,28 @@
 import { type Position, type Move, type Tile, type GameStatus, mapToBoard, BOARD_BORDER, type EntityState, type Direction } from "$lib/state/tiles";
 
+type MoveName = "up" | "down" | "left" | "right";
+
+const MOVE_DICT: Record<MoveName, { x: Move, y: Move }> = {
+    "up": { x: 0, y: -1 }, // i know dis wrong i messed up somewhere but whatever
+    "down": { x: 0, y: 1 },
+    "right": { x: 1, y: 0 },
+    "left": { x: -1, y: 0 }
+}
+
+
 export class Game {
     public board = $state<Tile[][]>([]);
     public a = $state<EntityState>({ id: 'bunny_a', pos: { x: 1, y: 1 }, facing: 'right' });
     public b = $state<EntityState>({ id: 'bunny_b', pos: { x: 6, y: 5 }, facing: 'right' });
     public status = $state<GameStatus>('menu');
+    public moves: MoveName[] = [];
 
     constructor(
         initBoard: number[][],
         a: Position,
         b: Position,
+        public readonly title: string,
+        public readonly day: number
     ) {
         this.board = mapToBoard(initBoard);
 
@@ -33,7 +46,25 @@ export class Game {
         this.moveEntity(this.a, dx, dy);
         this.moveEntity(this.b, -dx as Move, -dy as Move);
 
+        // WARNING: BS AHEAD
+        this.moves.push(((Object.keys(MOVE_DICT) as Array<keyof typeof MOVE_DICT>).find((key) => MOVE_DICT[key].x === dx && MOVE_DICT[key].y === dy))!)
         this.triggerGlobalOnMove();
+        
+        const CARDINAL: Position[] = [
+            { x: 0, y: 1 },
+            { x: 0, y: -1 },
+            { x: 1, y: 0 },
+            { x: -1, y: 0 }
+        ];
+
+        for (let V = 0; V < CARDINAL.length; V++) {
+            const card = CARDINAL[V];
+            const checkPos: Position = { x: this.a.pos.x + card.x, y: this.a.pos.y + card.y };
+
+            if (checkPos.x === this.b.pos.x && checkPos.y === this.b.pos.y) {
+                this.status = "won";
+            }
+        }
     }
 
 

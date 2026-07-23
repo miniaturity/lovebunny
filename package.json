@@ -23,5 +23,8 @@
     "typescript": "^6.0.3",
     "vite": "^8.0.16",
     "wrangler": "^4.97.0"
+  },
+  "dependencies": {
+    "svelte-persisted-store": "^0.12.0"
   }
 }

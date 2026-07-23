@@ -127,7 +127,7 @@ const TileRegistry: Record<number, () => Tile> = {
     1: () => new Ground(0),
     2: () => new GroundGrass(1),
     3: () => new Wall(2),
-
+    
     
     
 };
