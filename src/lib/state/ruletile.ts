@@ -25,6 +25,7 @@ export interface TileRule {
     frameDuration?: number; 
     rotations?: boolean;
     mirrorX?: boolean;
+    initRotation?: Rotation; // How many deg relative to top left the sprite is rotated already.
 }
 function rotate90(arr: Match[]): Match[] {
     return [
@@ -76,7 +77,7 @@ export abstract class RuleTile extends AnimatedTile {
                     return {
                         x: coord.x,
                         y: coord.y,
-                        rotationAngle: perm.angle as Rotation,
+                        rotationAngle: ((perm.angle) - (rule?.initRotation || 0)) as Rotation,
                         flipX: perm.flipped
                     };
                 }

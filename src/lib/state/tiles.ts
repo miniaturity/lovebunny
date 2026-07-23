@@ -31,12 +31,20 @@ export class Empty extends RuleTile {
                 // outer corner: land on two adjacent cardinal sides with the
                 // opposite sides open water. Base sprite is the top-right corner
                 // (land N + E); rotations produce the other three corners.
-                pattern: [0, 0, 0, null, 1, null, 1, null],
+                pattern: [0, null, 0, null, 1, null, 1, null],
                 sprite: [
-                    { x: 10, y: 0 },
-                    { x: 11, y: 0 }
+                    { x: 14, y: 0 },
+                    { x: 15, y: 0 }
                 ],
-                rotations: true,
+                mirrorX: true
+            },
+            {
+                pattern: [1, null, 1, null, 0, null, 0],
+                sprite: [
+                    { x: 16, y: 0 },
+                    { x: 17, y: 0 },
+                ],
+                mirrorX: true
             },
             {
                 // inner corner (concave): a single diagonal neighbour is land while
@@ -45,22 +53,10 @@ export class Empty extends RuleTile {
                 // other three diagonals now that the renderer honours rotationAngle.
                 pattern: [1, 0, 1, null, null, null, null, null],
                 sprite: [
-                    { x: 14, y: 0 },
-                    { x: 15, y: 0 }
+                    { x: 10, y: 0 },
+                    { x: 11, y: 0 }
                 ],
                 rotations: true,
-            },
-            {
-                // horizontal shoreline: land to the east, open water to the west.
-                // mirrorX flips it to also draw the west-facing (left) shoreline.
-                // Requiring the opposite side to be water keeps the map border
-                // (where out-of-bounds counts as land) from becoming a beach.
-                pattern: [null, null, 0, null, null, null, 1, null],
-                sprite: [
-                    { x: 8, y: 0 },
-                    { x: 9, y: 0 }
-                ],
-                mirrorX: true,
             },
             {
                 // vertical shoreline: land to the north, open water to the south.
@@ -72,6 +68,18 @@ export class Empty extends RuleTile {
                     { x: 0, y: 0 },
                     { x: 1, y: 0 }
                 ],
+            },
+            {
+                // horizontal shoreline: land to the east, open water to the west.
+                // mirrorX flips it to also draw the west-facing (left) shoreline.
+                // Requiring the opposite side to be water keeps the map border
+                // (where out-of-bounds counts as land) from becoming a beach.
+                pattern: [null, null, 0, null, null, null, 1, null],
+                sprite: [
+                    { x: 8, y: 0 },
+                    { x: 9, y: 0 }
+                ],
+                rotations: true,
             },
         ]
     }
