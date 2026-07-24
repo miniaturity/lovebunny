@@ -2,7 +2,7 @@ import type { Game } from '$lib/state/game.svelte';
 import type { SpriteCoord, SpriteResult } from './ruletile';
 
 export type Position = { x: number, y: number };
-export type Entity = "fox" | "bunny_a" | "bunny_b";
+export type Entity = "lever" | "bunny_a" | "bunny_b";
 
 export abstract class Tile {
     protected _occupant: Entity | "empty" = "empty";

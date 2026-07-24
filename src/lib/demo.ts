@@ -19,7 +19,7 @@ const DEMO_LEVEL = [
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
 ];
 
-const DEMO_TITLE = "what sup";
+const DEMO_TITLE = "so close, yet so far";
 const DEMO_DAY = 0;
 
 export const DEMO_GAME: ConstructorParameters<typeof Game> = [

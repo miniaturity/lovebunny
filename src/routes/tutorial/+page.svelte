@@ -3,31 +3,24 @@
     import ts from "$lib/assets/sprites/spritesheet.png";
     import cs from "$lib/assets/sprites/charactersheet.png";
     import { Game, type MoveName } from "$lib/state/game.svelte";
-    import { DEMO_GAME } from "$lib/demo";
+    import { TUTORIAL_1 } from "$lib/levels/tutorial_a";
     import { onMount } from "svelte";
-    import { hasVisited } from "$lib/state/store";
-    import Modal from "$lib/components/modal.svelte";
 
-    import love from "$lib/assets/images/love.png";
     import wave from "$lib/assets/images/wave.gif";
     import Button from "$lib/components/button.svelte";
+
+    import Navlink from "$lib/components/navlink.svelte";
+
     import carrot_start from "$lib/assets/images/carrot-start.png";
     import carrot_end from "$lib/assets/images/carrot-end.png";
-    import Navlink from "$lib/components/navlink.svelte";
 
 
     let tileSheet = $state<HTMLImageElement>();
     let characterSheet = $state<HTMLImageElement>();
 
-    let isNewUser = $state<boolean>(false);
-
-    let canShowModal = $state<boolean>(true);
-    let showIntroModal = $derived<boolean>(true);
-    let showTutorialModal = $state<boolean>(false);
 
     const TILE_SIZE = 16;
 
-    // Randomly scattered background wave gifs, sized to match the board tiles.
     const WAVE_COUNT = 24;
     let waveTiles = $state<{ top: number; left: number }[]>([]);
     let gameEl = $state<HTMLDivElement>();
@@ -46,10 +39,6 @@
         characterSheet = new Image();
         characterSheet.src = cs;
 
-        if (!$hasVisited) {
-            isNewUser = true;
-            $hasVisited = true;
-        }
 
         waveTiles = Array.from({ length: WAVE_COUNT }, () => ({
             top: Math.random() * 100,
@@ -67,65 +56,22 @@
         };
     });
 
-    function play() {
-        game.status = "playing";
-        showIntroModal = false;
-        canShowModal = true;
-    }
 
     function reset() {
         if (game.status === "won") return;
-        game = new Game(...DEMO_GAME);
+        game = new Game(...TUTORIAL_1);
         game.status = "playing";
     }
 
-    const closeModal = () => { if (game.status === "menu") game.status = "playing"; }
 
 
-    let game = $state<Game>(new Game(...DEMO_GAME));
+
+    let game = $state<Game>(new Game(...TUTORIAL_1));
     let moves = $derived<MoveName[]>(game.moves);
 
-    let resetText = $state<string>("Reset");
 
     const title = "bunniesin.love";
-
 </script>
-
-<Modal bind:showModal={showIntroModal} bind:canShowModal onClose={closeModal}>
-    <div class="modal-content">
-        <img src={love} alt=""/>
-        <header>
-            welcome to bunniesin.love!
-        </header>
-        <p>
-            {#each "reunite" as char, i} 
-                <span class="tchar" style={`
-                --index: ${i};
-                --col: #000;
-                --col2: var(--water-blue);`}>{char}</span>
-            {/each} the lover bunnies! their 
-            {#each "hearts" as char, i}
-                <span class="tchar" style={`--index: ${i};
-                --col: #000;
-                --col2: red;
-                `}>
-                    {char}
-                </span>
-            {/each}
-            are tethered, so they make the same moves.
-        </p>
-        <div class="buttons">
-            <Button onclick={play}>
-                Play
-            </Button>
-
-            <Button href={"/tutorial"} style="background-color: var(--carrot-orange);">
-                Tutorial
-            </Button>
-        </div>
-    </div>
-</Modal>
-
 
 <div class="page">
 
@@ -159,20 +105,21 @@
                 --col2: var(--lpink);`}>{char}</span>
             {/each}
         </div>
+
         {#if game}
             <div class="subtitle">
                 <div class="day">
                     <img alt="" src={carrot_start}/>
                     <div class="day-text">
-                        {#each (`day ${game.day} - ` + game.title) as char, i}
-                            <span class="char" style={`--index: ${i}`}>{char === ' ' ? '\u00A0' : char}</span>
-                        {/each}
+                        tutorial - level 1
                     </div>
                     <img alt="" src={carrot_end}/>
                 </div>
             </div>
-        {/if}
+        {/if}    
     </header>
+
+
     <div class="game" bind:this={gameEl}>
         {#if tileSheet && characterSheet}
             <Board 
@@ -194,7 +141,7 @@
                 </Button>
 
                 <Button onclick={() => {}}>
-                    Stats
+                    Next {">"}
                 </Button>
             </div>
         </div>
@@ -210,33 +157,6 @@
         padding: 8px;
     }
 
-    .modal-content {
-        --p: 12px;
-        padding: var(--p);
-        max-width: 350px;
-        gap: var(--p);   
-
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        
-
-        & header {
-            font-size: 1.5rem;
-        }
-
-        & p {
-            text-align: center;
-        }
-
-        & img {
-            width: 100%;
-            height: auto;
-            padding: 24px;
-            padding-bottom: 0;
-            image-rendering: pixelated;
-        }
-    }
 
     .page {
         position: relative;

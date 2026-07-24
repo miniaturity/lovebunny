@@ -40,10 +40,12 @@
         width: 100%; height: 100%;
         display: flex;
         align-items: center; justify-content: center;
+        pointer-events: none;
         z-index: 99;
     }
 
     .modal {
+        pointer-events: all;
         position: relative;
         background-color: #fff;
         font-family: "Halogen";
