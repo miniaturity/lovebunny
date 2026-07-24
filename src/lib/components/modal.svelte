@@ -2,19 +2,30 @@
     import type { Snippet } from "svelte";
 
     let {
+        canShowModal = $bindable(),
         showModal = $bindable(),
+        onClose,
         children
     }: {
+        canShowModal: boolean;
         showModal: boolean;
+        onClose?: () => void;
         children: Snippet;
     } = $props();
+
+    function close() {
+        showModal = false;
+        canShowModal = true;
+
+        onClose?.();
+    }
 </script>
 
 {#if showModal}
     <div class="modal-overlay">
         <div class="modal">
             
-            <button onclick={() => showModal = false} title="close">
+            <button onclick={close} title="close">
                 <svg stroke="black" fill="black" stroke-width="0" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><path d="M405 136.798L375.202 107 256 226.202 136.798 107 107 136.798 226.202 256 107 375.202 136.798 405 256 285.798 375.202 405 405 375.202 285.798 256z"></path></svg>
             </button>
             {@render children()}
@@ -52,21 +63,8 @@
                 animation: rot 1s steps(2) infinite;
             }
         }
-
-        animation: modal-rot 2.5s steps(2) infinite;
-
-        &:hover {
-            animation: none;
-        }
     }
 
-    @keyframes modal-rot {
-        0% {
-            transform: rotateZ(1deg);
-        } 100% {
-            transform: rotateZ(-1deg);
-        }
-    }
 
     @keyframes rot {
         0% {

@@ -1,6 +1,6 @@
 import { type Position, type Move, type Tile, type GameStatus, mapToBoard, BOARD_BORDER, type EntityState, type Direction } from "$lib/state/tiles";
 
-type MoveName = "up" | "down" | "left" | "right";
+export type MoveName = "up" | "down" | "left" | "right";
 
 const MOVE_DICT: Record<MoveName, { x: Move, y: Move }> = {
     "up": { x: 0, y: -1 }, // i know dis wrong i messed up somewhere but whatever
@@ -15,7 +15,7 @@ export class Game {
     public a = $state<EntityState>({ id: 'bunny_a', pos: { x: 1, y: 1 }, facing: 'right' });
     public b = $state<EntityState>({ id: 'bunny_b', pos: { x: 6, y: 5 }, facing: 'right' });
     public status = $state<GameStatus>('menu');
-    public moves: MoveName[] = [];
+    public moves: MoveName[] = $state([]);
 
     constructor(
         initBoard: number[][],
