@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Game } from '$lib/state/game.svelte';
     import { type Rotation } from '$lib/state/ruletile';
-    import { type EntityState } from '$lib/state/tiles';
+    import { type Entity } from '$lib/state/entity';
 
     let {
         game,
@@ -129,7 +129,7 @@
 
     function drawEntity(
         ctx: CanvasRenderingContext2D,
-        entity: EntityState,
+        entity: Entity,
         entityRow: number,
         timestamp: number
     ) {

@@ -1,14 +1,14 @@
 import { AnimatedTile } from './animatedtile';
 import type { Game } from './game.svelte';
 import { RuleTile, type SpriteCoord } from './ruletile';
-import { Tile, type Position, type Entity, StaticTile } from './tile';
+import { Tile, type Position, StaticTile, type EntityType } from './tile';
 
 export type Move = -1 | 0 | 1;
 export type GameStatus = 'playing' | 'won' | 'unfocused' | 'menu';
 
 // Re-exported so existing imports of Tile/Position/Entity from './tiles' keep working.
 export { Tile };
-export type { Position, Entity };
+export type { Position, EntityType };
 
 export class Empty extends RuleTile {
     constructor() { 
@@ -298,12 +298,6 @@ export function mapToBoard(map: number[][]): Tile[][] {
 }
 
 export type Direction = 'left' | 'right';
-
-export interface EntityState {
-    id: Entity;
-    pos: Position;
-    facing: Direction;
-}
 
 export const DIRECTION_ROWS: Record<Direction, number> = {
     left: 1,

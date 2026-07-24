@@ -1,4 +1,5 @@
-import { type Position, type Move, type Tile, type GameStatus, mapToBoard, BOARD_BORDER, type EntityState, type Direction } from "$lib/state/tiles";
+import { type Position, type Move, type Tile, type GameStatus, mapToBoard, BOARD_BORDER, type Direction } from "$lib/state/tiles";
+import { type Entity } from "./entity";
 
 export type MoveName = "up" | "down" | "left" | "right";
 
@@ -12,8 +13,8 @@ const MOVE_DICT: Record<MoveName, { x: Move, y: Move }> = {
 
 export class Game {
     public board = $state<Tile[][]>([]);
-    public a = $state<EntityState>({ id: 'bunny_a', pos: { x: 1, y: 1 }, facing: 'right' });
-    public b = $state<EntityState>({ id: 'bunny_b', pos: { x: 6, y: 5 }, facing: 'right' });
+    public a = $state<Entity>({ id: 'bunny_a', pos: { x: 1, y: 1 }, facing: 'right' });
+    public b = $state<Entity>({ id: 'bunny_b', pos: { x: 6, y: 5 }, facing: 'right' });
     public status = $state<GameStatus>('menu');
     public moves: MoveName[] = $state([]);
 
@@ -69,7 +70,7 @@ export class Game {
     }
 
 
-    public moveEntity(entity: EntityState, dx: Move, dy: Move) {
+    public moveEntity(entity: Entity, dx: Move, dy: Move) {
         const nextX = entity.pos.x + dx;
         const nextY = entity.pos.y + dy;
 

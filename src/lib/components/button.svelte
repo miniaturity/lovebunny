@@ -7,12 +7,14 @@
         children,
         href,
         onclick,
+        disabled,
         className = "",
     }: {
         children: Snippet;
         className?: string;
         style?: string;
         href?: string;
+        disabled?: boolean;
         onclick?: () => void;
     } = $props();
 
@@ -33,11 +35,11 @@
 </script>
 
 {#if onclick}
-    <button class={computedClass} {onclick} style={computedStyle}>
+    <button class={computedClass} {onclick} style={computedStyle} {disabled}>
         {@render children()}
     </button>
 {:else if href}
-    <a class={computedClass} {href} style={computedStyle}>
+    <a class={computedClass} {href} style={computedStyle} >
         {@render children()}
     </a>
 {/if}
@@ -55,6 +57,11 @@
         box-shadow: 2px 2px #000;
 
         animation: rotate 3.2s steps(3) infinite;
+
+        &:disabled {
+            cursor: not-allowed;
+            filter: grayscale(1) brightness(0.5);
+        }
     }
 
     @keyframes rotate {

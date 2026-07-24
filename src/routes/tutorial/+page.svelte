@@ -50,6 +50,8 @@
         if (gameEl) resizeObserver.observe(gameEl);
         window.addEventListener("resize", updateTileDisplaySize);
 
+        game.status = "playing";
+
         return () => {
             resizeObserver.disconnect();
             window.removeEventListener("resize", updateTileDisplaySize);
@@ -91,8 +93,8 @@
     </div>
 
     <div class="nav">
-        <Navlink href={"/editor"} title={"editor"}>
-            <svg fill="white" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><path d="M474.1 398.2L289.1 212c18.3-47 8.1-102.3-30.5-141.1C217.9 30 156.9 21.8 108.1 44.3l87.4 88-61 61.4-89.5-88c-24.3 49-14.1 110.4 26.5 151.3 38.6 38.9 93.5 49.1 140.3 30.7l185 186.2c8.1 8.2 20.3 8.2 28.5 0l46.8-47c10.2-8.3 10.2-22.6 2-28.7z"></path></svg>
+        <Navlink href={"/"} title={"back"}>
+            <svg fill="white" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><path d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L106.5 288 480 288c17.7 0 32-14.3 32-32s-14.3-32-32-32l-373.5 0 108.2-108.2c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"></path></svg>
         </Navlink>
     </div>
 
@@ -140,7 +142,7 @@
                     Reset
                 </Button>
 
-                <Button onclick={() => {}}>
+                <Button onclick={() => {}} disabled={game.status !== "won"}>
                     Next {">"}
                 </Button>
             </div>
@@ -262,11 +264,6 @@
         animation-delay: calc(0.2s * var(--index));
     }
 
-    .char {
-        display: inline-block;
-        animation: letterfloat 3s ease-in-out infinite;
-        animation-delay: calc(0.2s * var(--index));
-    }
 
     @keyframes letterfloat_title {
         0% {
