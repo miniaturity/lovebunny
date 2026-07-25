@@ -10,7 +10,7 @@ const MOVE_DICT: Record<MoveName, { x: Move, y: Move }> = {
     "left": { x: -1, y: 0 }
 }
 
-
+export type GameParams = ConstructorParameters<typeof Game>;
 export class Game {
     public board = $state<Tile[][]>([]);
     public a = $state<Entity>({ id: 'bunny_a', pos: { x: 1, y: 1 }, facing: 'right' });

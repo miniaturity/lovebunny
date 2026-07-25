@@ -2,8 +2,8 @@
     import Board from "$lib/components/board.svelte";
     import ts from "$lib/assets/sprites/spritesheet.png";
     import cs from "$lib/assets/sprites/charactersheet.png";
-    import { Game, type MoveName } from "$lib/state/game.svelte";
-    import { T1_DIALOGUE, TUTORIAL_1 } from "$lib/levels/tutorial_a";
+    import { Game, type GameParams, type MoveName } from "$lib/state/game.svelte";
+    import { T1_DIALOGUE, T1_GAME } from "$lib/levels/tutorial_1";
     import { onMount } from "svelte";
 
     import wave from "$lib/assets/images/wave.gif";
@@ -14,6 +14,9 @@
     import carrot_start from "$lib/assets/images/carrot-start.png";
     import carrot_end from "$lib/assets/images/carrot-end.png";
     import Dialogue, { type DialogueTree } from "$lib/components/dialogue.svelte";
+    import { T2_DIALOGUE, T2_GAME } from "$lib/levels/tutorial_2";
+    import { T3_DIALOGUE, T3_GAME } from "$lib/levels/tutorial_3";
+    import { goto } from "$app/navigation";
 
 
     let tileSheet = $state<HTMLImageElement>();
@@ -50,8 +53,6 @@
         if (gameEl) resizeObserver.observe(gameEl);
         window.addEventListener("resize", updateTileDisplaySize);
 
-        game.status = "playing";
-
         return () => {
             resizeObserver.disconnect();
             window.removeEventListener("resize", updateTileDisplaySize);
@@ -59,20 +60,70 @@
     });
 
 
+    interface TutorialLevel {
+        dialogue: DialogueTree;
+        game: GameParams;
+    }
+
+    const TUTORIAL_LEVELS: TutorialLevel[] = [
+        {
+            dialogue: T1_DIALOGUE,
+            game: T1_GAME
+        },
+        {
+            dialogue: T2_DIALOGUE,
+            game: T2_GAME
+        },
+        {
+            dialogue: T3_DIALOGUE,
+            game: T3_GAME
+        }
+    ]
+
+    $effect(() => {
+        if (interacted && game.status === "menu" && !renderDialogue) {
+            game.status = "playing";
+        }
+    });
+
+    $effect(() => {
+        if (game.status === "won") {
+            canGoNext = true;
+            currentDialogueKey = "onWin";
+            renderDialogue = true;
+        }
+    });
+
+    function next() {
+        if (!canGoNext) return;
+
+        if (levelIndex === TUTORIAL_LEVELS.length - 1) goto("/");
+
+        canGoNext = false;
+        levelIndex++;
+        currentDialogueKey = "start";
+        renderDialogue = true;
+        game.status = 'menu';
+    }
+    
     function reset() {
         if (game.status === "won") return;
-        game = new Game(...TUTORIAL_1);
+        game = new Game(...currentLevel);
         game.status = "playing";
     }
 
-
-    let game = $state<Game>(new Game(...TUTORIAL_1));
+    let levelIndex = $state<number>(0);
+    let currentLevel = $derived<GameParams>(TUTORIAL_LEVELS[levelIndex].game);
+    let game = $derived<Game>(new Game(...currentLevel));
     let moves = $derived<MoveName[]>(game.moves);
+    let canGoNext = $state<boolean>(false);
 
     let interacted = $state<boolean>(false);
     let renderDialogue = $state<boolean>(false);
-    let currentDialogue = $state<DialogueTree>(T1_DIALOGUE);
+    let currentDialogue = $derived<DialogueTree>(TUTORIAL_LEVELS[levelIndex].dialogue);
+    let currentDialogueKey = $state<string>("start");
     let finished = $state<boolean>(false);
+    
 
     let canShowModal = $state<boolean>(true);
     let showIntroModal = $derived<boolean>(true);
@@ -122,7 +173,7 @@
                 <div class="day">
                     <img alt="" src={carrot_start}/>
                     <div class="day-text">
-                        tutorial - level 1
+                        tutorial - level {game.day}
                     </div>
                     <img alt="" src={carrot_end}/>
                 </div>
@@ -147,12 +198,13 @@
                     onclick={reset}
                     style="background-color: #c20202;"
                     className="reset-btn"
+                    disabled={game.status !== "playing"}
                 >
                     Reset
                 </Button>
 
-                <Button onclick={() => {}} disabled={game.status !== "won"}>
-                    Next {">"}
+                <Button onclick={next} disabled={!canGoNext}>
+                   {levelIndex !== TUTORIAL_LEVELS.length - 1 ? "Next >" : "Home"}
                 </Button>
             </div>
         </div>
@@ -162,7 +214,7 @@
         <Dialogue 
             bind:renderDialogue
             dialogue={currentDialogue}
-            dialogueKey="start"
+            dialogueKey={currentDialogueKey}
             bind:finished
         />
     {/if}
@@ -174,6 +226,10 @@
         top: 0;
         left: 0;
         padding: 8px;
+    }
+
+    :global(body) {
+        overflow-x: hidden;
     }
 
 
@@ -205,7 +261,7 @@
     .game {
         position: relative;
         z-index: 1;
-        width: clamp(320px, 40vw, 800px);
+        width: clamp(280px, 35vw, 800px);
         aspect-ratio: 1 / 1;
     }
 
@@ -229,7 +285,6 @@
         flex-direction: column;
         align-items: center;
         font-family: "Halogen";
-        margin-bottom: 12px;
     }
 
     .title {

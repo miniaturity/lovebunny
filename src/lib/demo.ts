@@ -1,4 +1,4 @@
-import type { Game } from "./state/game.svelte";
+import type { Game, GameParams } from "./state/game.svelte";
 
 const DEMO_LEVEL = [
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
@@ -22,7 +22,7 @@ const DEMO_LEVEL = [
 const DEMO_TITLE = "love you";
 const DEMO_DAY = 1;
 
-export const DEMO_GAME: ConstructorParameters<typeof Game> = [
+export const DEMO_GAME: GameParams = [
     DEMO_LEVEL,
     { x: 1, y: 1 }, 
     { x: 14, y: 14 },

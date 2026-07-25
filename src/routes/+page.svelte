@@ -189,6 +189,7 @@
                     onclick={reset}
                     style="background-color: #c20202;"
                     className="reset-btn"
+                    disabled={game.status !== "playing"}
                 >
                     Reset
                 </Button>

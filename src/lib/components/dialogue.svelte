@@ -43,7 +43,7 @@
 
     const sfx_TEXT = preloadAudio(text_sfx_file);
 
-    const SPEED_MS = 25;
+    const SPEED_MS = 30;
     
     let currentDialogue = $derived(dialogue[dialogueKey]);
     let currentText = $state<string>("");
@@ -156,11 +156,13 @@
                 <div class="db-text">
                     {currentText}
                 </div>
+
+                {#if currentText.length === currentDialogue.text.length || continueFlag}
+                    <div class="arrow">{"->"}</div>
+                {/if}
             </div>
 
-            {#if currentText.length === currentDialogue.text.length || continueFlag}
-                <div class="arrow">{">"}</div>
-            {/if}
+            
         </div>
 
         <div class="db-expression">
@@ -187,8 +189,13 @@
         align-items: flex-start;
         justify-content: center;
 
-        height: clamp(150px, 25vh, 500px);
+        --pad-bottom: 50px;
+
+        height: calc(clamp(150px, 25vh, 500px) + var(--pad-bottom));
         width: 100%;
+
+        padding-bottom: var(--pad-bottom);
+        overflow: visible;
 
         cursor: pointer;
 
@@ -200,8 +207,10 @@
 
     .db-content {
         position: relative;
-        width: clamp(200px, 80%, 500px);
+        width: clamp(200px, 50vw, 500px);
         height: 100%;
+        
+        
 
         display: flex;
         flex-direction: row;
@@ -220,11 +229,12 @@
     }
 
     .db-text {
-        width: 100%;
+        width: 95%;
         display: flex;
         align-items: flex-start;
         font-size: clamp(1rem, 1.5dvw, 1.2rem);
         flex-grow: 1;
+        text-align: left;
     }
 
     .db-name {
@@ -269,6 +279,13 @@
             width: 100%; height: 100%;
             object-fit: cover;
         }
+    }
+
+    .arrow {
+        position: absolute;
+        bottom: 15%; right: 20%;
+
+        font-size: 2rem;
     }
 
     @keyframes paper-rotate {
