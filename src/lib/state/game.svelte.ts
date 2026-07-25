@@ -15,6 +15,7 @@ export class Game {
     public board = $state<Tile[][]>([]);
     public a = $state<Entity>({ id: 'bunny_a', pos: { x: 1, y: 1 }, facing: 'right' });
     public b = $state<Entity>({ id: 'bunny_b', pos: { x: 6, y: 5 }, facing: 'right' });
+    public hearts = $state<Entity>({ id: 'hearts', pos: { x: 1, y: 1 }, facing: 'right' });
     public status = $state<GameStatus>('menu');
     public moves: MoveName[] = $state([]);
 
@@ -46,6 +47,8 @@ export class Game {
 
         this.moveEntity(this.a, dx, dy);
         this.moveEntity(this.b, -dx as Move, -dy as Move);
+
+        this.hearts.pos = { x: (this.a.pos.x + this.b.pos.x) / 2, y: (this.a.pos.y + this.b.pos.y) / 2 };
 
         // if they let me use objects as a key it would be cool and i wouldnt have to do this 
         // WARNING: BS AHEAD

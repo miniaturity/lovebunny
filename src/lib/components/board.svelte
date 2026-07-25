@@ -3,7 +3,7 @@
     import { type Rotation } from '$lib/state/ruletile';
     import { type Move } from '$lib/state/tiles';
     import { type Entity } from '$lib/state/entity';
-    
+
     let { 
         game, 
         tileSheet, 
@@ -116,6 +116,10 @@
 
             drawEntity(ctx, game.a, 0, timestamp); 
             drawEntity(ctx, game.b, 1, timestamp); 
+
+            if (game.status === "won") {
+                drawEntity(ctx, game.hearts, 2, timestamp);
+            }
 
             animationFrameId = requestAnimationFrame(render);
         }

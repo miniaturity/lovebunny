@@ -1,9 +1,8 @@
 import type { Game } from '$lib/state/game.svelte';
-import type { SpriteCoord, SpriteResult } from './ruletile';
-import { type Entity } from "./entity";
+import type { SpriteCoord } from './ruletile';
+import { type Entity, type EntityType } from "./entity";
 
 export type Position = { x: number, y: number };
-export type EntityType = "lever" | "bunny_a" | "bunny_b";
 
 export abstract class Tile {
     protected _occupant: Entity | "empty" = "empty";
@@ -19,7 +18,7 @@ export abstract class Tile {
     set occupant(o: Entity | "empty") { this._occupant = o; }
 
     onLand(e: EntityType, pos: Position, game: Game): void {
-
+        
     };
     onMove?(game: Game): void;
     tick?(game: Game): void;

@@ -1,14 +1,14 @@
 import { AnimatedTile } from './animatedtile';
 import type { Game } from './game.svelte';
 import { RuleTile, type SpriteCoord } from './ruletile';
-import { Tile, type Position, StaticTile, type EntityType } from './tile';
+import { Tile, type Position, StaticTile } from './tile';
 
 export type Move = -1 | 0 | 1;
 export type GameStatus = 'playing' | 'won' | 'unfocused' | 'menu';
 
 // Re-exported so existing imports of Tile/Position/Entity from './tiles' keep working.
 export { Tile };
-export type { Position, EntityType };
+export type { Position };
 
 export class Empty extends RuleTile {
     constructor() { 
