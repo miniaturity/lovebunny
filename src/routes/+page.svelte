@@ -200,9 +200,14 @@
         </div>
     </div>
     
+   
 </div>
 
 <style lang="scss">
+    :global(body) {
+        overflow-x: hidden;
+    }
+
     .nav {
         position: absolute;
         top: 0;
@@ -238,6 +243,8 @@
         }
     }
 
+  
+
     .page {
         position: relative;
         width: 100dvw; min-height: 100dvh;
@@ -246,7 +253,7 @@
         align-items: center;
         justify-content: center; 
         background-color: var(--water-blue);
-        overflow: hidden;
+        overflow-x: hidden;
     }
 
     .wave-background {
@@ -266,7 +273,7 @@
     .game {
         position: relative;
         z-index: 1;
-        width: clamp(320px, 40vw, 800px);
+        width: clamp(280px, 35vw, 800px);
         aspect-ratio: 1 / 1;
     }
 
@@ -290,7 +297,6 @@
         flex-direction: column;
         align-items: center;
         font-family: "Halogen";
-        margin-bottom: 12px;
     }
 
     .title {

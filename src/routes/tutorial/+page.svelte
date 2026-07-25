@@ -3,7 +3,7 @@
     import ts from "$lib/assets/sprites/spritesheet.png";
     import cs from "$lib/assets/sprites/charactersheet.png";
     import { Game, type MoveName } from "$lib/state/game.svelte";
-    import { TUTORIAL_1 } from "$lib/levels/tutorial_a";
+    import { T1_DIALOGUE, TUTORIAL_1 } from "$lib/levels/tutorial_a";
     import { onMount } from "svelte";
 
     import wave from "$lib/assets/images/wave.gif";
@@ -13,11 +13,11 @@
 
     import carrot_start from "$lib/assets/images/carrot-start.png";
     import carrot_end from "$lib/assets/images/carrot-end.png";
+    import Dialogue, { type DialogueTree } from "$lib/components/dialogue.svelte";
 
 
     let tileSheet = $state<HTMLImageElement>();
     let characterSheet = $state<HTMLImageElement>();
-
 
     const TILE_SIZE = 16;
 
@@ -66,14 +66,23 @@
     }
 
 
-
-
     let game = $state<Game>(new Game(...TUTORIAL_1));
     let moves = $derived<MoveName[]>(game.moves);
 
+    let interacted = $state<boolean>(false);
+    let renderDialogue = $state<boolean>(false);
+    let currentDialogue = $state<DialogueTree>(T1_DIALOGUE);
+    let finished = $state<boolean>(false);
+
+    let canShowModal = $state<boolean>(true);
+    let showIntroModal = $derived<boolean>(true);
 
     const title = "bunniesin.love";
 </script>
+
+<svelte:window onmousedown={() => { if (!interacted) { interacted = true; 
+    renderDialogue = true;
+} }}/>
 
 <div class="page">
 
@@ -149,6 +158,14 @@
         </div>
     </div>
     
+    {#if renderDialogue}
+        <Dialogue 
+            bind:renderDialogue
+            dialogue={currentDialogue}
+            dialogueKey="start"
+            bind:finished
+        />
+    {/if}
 </div>
 
 <style lang="scss">

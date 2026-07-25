@@ -1,3 +1,4 @@
+import type { DialogueNode, DialogueTree } from "$lib/components/dialogue.svelte";
 import type { Game } from "../state/game.svelte";
 
 const LEVEL = [
@@ -17,4 +18,13 @@ export const TUTORIAL_1: ConstructorParameters<typeof Game> = [
     { x: 4, y: 4 },
     TITLE,
     DAY
-]   
+]
+
+export const T1_DIALOGUE: DialogueTree = {
+    start: {
+        id: "start",
+        expression: "happy.png",
+        text: "hello! welcome to the tutorial",
+        name: "mini"
+    }
+}
