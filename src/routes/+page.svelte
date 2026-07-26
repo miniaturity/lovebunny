@@ -2,7 +2,7 @@
     import Board from "$lib/components/board.svelte";
     import ts from "$lib/assets/sprites/spritesheet.png";
     import cs from "$lib/assets/sprites/charactersheet.png";
-    import { Game, type MoveName } from "$lib/state/game.svelte";
+    import { Game, MOVE_DICT, type MoveName } from "$lib/state/game.svelte";
     import { DEMO_GAME } from "$lib/demo";
     import { onMount } from "svelte";
     import { hasVisited } from "$lib/state/store";
@@ -14,16 +14,20 @@
     import carrot_start from "$lib/assets/images/carrot-start.png";
     import carrot_end from "$lib/assets/images/carrot-end.png";
     import Navlink from "$lib/components/navlink.svelte";
+    import Winmodal from "$lib/components/winmodal.svelte";
 
 
     let tileSheet = $state<HTMLImageElement>();
     let characterSheet = $state<HTMLImageElement>();
 
-    let isNewUser = $state<boolean>(false);
+    let game = $state<Game>(new Game(...DEMO_GAME));
+    let playbackGame = $state<Game>(new Game(...DEMO_GAME));
+    let moves = $derived<MoveName[]>(game.moves);
 
+    let isNewUser = $state<boolean>(false);
     let canShowModal = $state<boolean>(true);
     let showIntroModal = $derived<boolean>(true);
-    let showTutorialModal = $state<boolean>(false);
+    let showWinModal = $derived<boolean>(game.status === "won");
 
     const TILE_SIZE = 16;
 
@@ -67,28 +71,44 @@
         };
     });
 
+    const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+    
+    async function playback(moves: MoveName[]) {
+        if (game.status !== "won") return;
+        game.status = "playback";
+        playbackGame = new Game(...DEMO_GAME);
+        playbackGame.status = "playback";
+
+        for (let i = 0; i < moves.length; i++) {
+            await sleep(250);
+            playmove(moves[i]);
+        }
+    }
+
+    function playmove(move: MoveName) {
+        const { x, y } = MOVE_DICT[move];
+        playbackGame.move(x, y);
+    }
+
+    function hideWinModal() {
+        showWinModal = false;
+    }
+
     function play() {
         game.status = "playing";
         showIntroModal = false;
         canShowModal = true;
     }
 
-    function reset() {
+    function reset(playing: boolean = true) {
         if (game.status === "won") return;
         game = new Game(...DEMO_GAME);
-        game.status = "playing";
+        if (playing) game.status = "playing";
     }
 
     const closeModal = () => { if (game.status === "menu") game.status = "playing"; }
 
-
-    let game = $state<Game>(new Game(...DEMO_GAME));
-    let moves = $derived<MoveName[]>(game.moves);
-
-    let resetText = $state<string>("Reset");
-
     const title = "bunniesin.love";
-
 </script>
 
 <Modal bind:showModal={showIntroModal} bind:canShowModal onClose={closeModal}>
@@ -126,6 +146,11 @@
     </div>
 </Modal>
 
+<Modal bind:showModal={showWinModal} bind:canShowModal>
+    {#if game}
+        <Winmodal {game} {playback}/>
+    {/if}
+</Modal>
 
 <div class="page">
 
@@ -145,8 +170,12 @@
     </div>
 
     <div class="nav">
-        <Navlink href={"/editor"} title={"editor"}>
+        <Navlink href="/editor" title="editor">
             <svg fill="white" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><path d="M474.1 398.2L289.1 212c18.3-47 8.1-102.3-30.5-141.1C217.9 30 156.9 21.8 108.1 44.3l87.4 88-61 61.4-89.5-88c-24.3 49-14.1 110.4 26.5 151.3 38.6 38.9 93.5 49.1 140.3 30.7l185 186.2c8.1 8.2 20.3 8.2 28.5 0l46.8-47c10.2-8.3 10.2-22.6 2-28.7z"></path></svg>
+        </Navlink>
+
+        <Navlink href="/tutorial" title="tutorial">
+            <svg fill="white" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><path d="M256 76c48.1 0 93.3 18.7 127.3 52.7S436 207.9 436 256s-18.7 93.3-52.7 127.3S304.1 436 256 436c-48.1 0-93.3-18.7-127.3-52.7S76 304.1 76 256s18.7-93.3 52.7-127.3S207.9 76 256 76m0-28C141.1 48 48 141.1 48 256s93.1 208 208 208 208-93.1 208-208S370.9 48 256 48z"></path><path d="M256.7 160c37.5 0 63.3 20.8 63.3 50.7 0 19.8-9.6 33.5-28.1 44.4-17.4 10.1-23.3 17.5-23.3 30.3v7.9h-34.7l-.3-8.6c-1.7-20.6 5.5-33.4 23.6-44 16.9-10.1 24-16.5 24-28.9s-12-21.5-26.9-21.5c-15.1 0-26 9.8-26.8 24.6H192c.7-32.2 24.5-54.9 64.7-54.9zm-26.3 171.4c0-11.5 9.6-20.6 21.4-20.6 11.9 0 21.5 9 21.5 20.6s-9.6 20.6-21.5 20.6-21.4-9-21.4-20.6z"></path></svg>
         </Navlink>
     </div>
 
@@ -176,7 +205,7 @@
     <div class="game" bind:this={gameEl}>
         {#if tileSheet && characterSheet}
             <Board 
-                {game}
+                game={game.status === "playback" ? playbackGame : game}
                 {tileSheet}
                 {characterSheet}
             />
@@ -194,7 +223,7 @@
                     Reset
                 </Button>
 
-                <Button onclick={() => {}}>
+                <Button onclick={() => { showWinModal = true; game.status = "won" }} disabled={game.status !== "won" && game.status !== "playback"}>
                     Stats
                 </Button>
             </div>

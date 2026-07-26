@@ -2,16 +2,16 @@ import type { DialogueTree } from "$lib/components/dialogue.svelte";
 import type { GameParams } from "../state/game.svelte";
 
 const LEVEL = [
-    [1, 1, 1, 1, 1, 1, 0, 1, 1, 1],
-    [1, 2, 1, 1, 1, 1, 0, 1, 1, 1],
-    [1, 2, 2, 1, 1, 1, 0, 1, 1, 1],
-    [1, 1, 4, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 0, 0, 0, 1, 1, 1],
-    [1, 1, 5, 1, 0, 1, 1, 1, 1, 1],
-    [1, 5, 1, 1, 0, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 0, 0, 1, 1, 1, 1],
+    [1, 1, 1, 1, 0, 1, 1, 1, 1, 1],
+    [1, 2, 1, 1, 0, 1, 1, 1, 5, 1],
+    [1, 2, 2, 1, 0, 1, 1, 1, 1, 1],
+    [1, 1, 4, 1, 0, 0, 1, 1, 1, 1],
     [1, 1, 1, 1, 1, 0, 1, 1, 1, 1],
     [1, 1, 1, 1, 1, 0, 1, 1, 1, 1],
+    [1, 1, 5, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
 ];
 
 const TITLE = "you shouldnt be able to see this.";
@@ -45,11 +45,15 @@ export const T3_DIALOGUE: DialogueTree = {
     onWin: {
         id: "onWin",
         expression: "happy.png",
-        text: "wow!! you're ready to play now :3",
+        text: "wow! you're ready to play now :3! the optimal solution was 10 moves!",
         pausePoints: [
             {
                 index: 4,
                 ms: 500
+            },
+            {
+                index: 33,
+                continue: true
             }
         ],
         name: "mini"

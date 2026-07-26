@@ -2,11 +2,12 @@
     import EditorBoard from "$lib/components/editorboard.svelte";
     import ts from "$lib/assets/sprites/spritesheet.png";
     import cs from "$lib/assets/sprites/charactersheet.png";
-    import { Game } from "$lib/state/game.svelte";
+    import { Game, type GameParams } from "$lib/state/game.svelte";
     import { DEMO_GAME } from "$lib/demo";
     import { onMount } from "svelte";
     import wave from "$lib/assets/images/wave.gif";
     import Navlink from "$lib/components/navlink.svelte";
+    import { DEFAULT_GAME } from "$lib/levels/default";
 
     let tileSheet = $state<HTMLImageElement>();
     let characterSheet = $state<HTMLImageElement>();
@@ -47,7 +48,11 @@
         };
     });
 
-    let game = $state<Game>(new Game(...DEMO_GAME));
+    let blueprint = $state<GameParams>(DEFAULT_GAME);
+    let game = $derived<Game>(new Game(...blueprint));
+
+    let brush = $state<number>(0);
+    
 </script>
 
 <div class="page">

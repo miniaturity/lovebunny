@@ -1,9 +1,12 @@
-import { type Position, type Move, type Tile, type GameStatus, mapToBoard, BOARD_BORDER, type Direction } from "$lib/state/tiles";
+import { type Position, type Move, type Tile, mapToBoard, BOARD_BORDER, type Direction } from "$lib/state/tiles";
 import { type Entity } from "./entity";
+import { solveLevel } from "./solver";
 
 export type MoveName = "up" | "down" | "left" | "right";
+export type GameStatus = 'playing' | 'won' | 'menu' | 'playback';
 
-const MOVE_DICT: Record<MoveName, { x: Move, y: Move }> = {
+
+export const MOVE_DICT: Record<MoveName, { x: Move, y: Move }> = {
     "up": { x: 0, y: -1 }, // i know dis wrong i messed up somewhere but whatever
     "down": { x: 0, y: 1 },
     "right": { x: 1, y: 0 },
@@ -17,7 +20,8 @@ export class Game {
     public b = $state<Entity>({ id: 'bunny_b', pos: { x: 6, y: 5 }, facing: 'right' });
     public hearts = $state<Entity>({ id: 'hearts', pos: { x: 1, y: 1 }, facing: 'right' });
     public status = $state<GameStatus>('menu');
-    public moves: MoveName[] = $state([]);
+    public moves = $state<MoveName[]>([]);
+    public solution = $state<MoveName[] | null>(null);
 
     constructor(
         initBoard: number[][],
@@ -28,15 +32,17 @@ export class Game {
     ) {
         this.board = mapToBoard(initBoard);
 
-        // mapToBoard pads the map with a border of empty tiles, so positions
-        // given here (relative to the original, unpadded map) need to be
-        // shifted by that same border to still land on the intended tile.
         this.a.pos = { x: a.x + BOARD_BORDER, y: a.y + BOARD_BORDER };
         this.b.pos = { x: b.x + BOARD_BORDER, y: b.y + BOARD_BORDER };
+        this.solution = solveLevel(initBoard, a, b);
+
+        if (!this.solution) {
+            console.error("Level is unsolvable.");
+        }
     }
 
     move(dx: Move, dy: Move) {
-        if (this.status !== 'playing') return;
+        if ((this.status !== 'playing' && this.status !== "playback") || !this.solution) return;
 
         const direction = this.getDirection(dx, dy);
 
@@ -66,7 +72,7 @@ export class Game {
             const card = CARDINAL[V];
             const checkPos: Position = { x: this.a.pos.x + card.x, y: this.a.pos.y + card.y };
 
-            if (checkPos.x === this.b.pos.x && checkPos.y === this.b.pos.y) {
+            if (checkPos.x === this.b.pos.x && checkPos.y === this.b.pos.y && this.status === "playing") {
                 this.status = "won";
             }
         }

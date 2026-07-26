@@ -235,6 +235,8 @@
         font-size: clamp(1rem, 1.5dvw, 1.2rem);
         flex-grow: 1;
         text-align: left;
+        text-shadow: 2px 2px 0px #fff;
+        z-index: 9;
     }
 
     .db-name {

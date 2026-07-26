@@ -169,10 +169,6 @@
     }
 
     function keydown(e: KeyboardEvent) {
-        if (e.key === "x") {
-            game.status = 'playing';
-            return;
-        }
         const keyMap: Record<string, [Move, Move]> = {
             "ArrowUp": [0, -1],
             "ArrowLeft": [-1, 0],

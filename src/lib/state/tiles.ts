@@ -4,15 +4,14 @@ import { RuleTile, type SpriteCoord } from './ruletile';
 import { Tile, type Position, StaticTile } from './tile';
 
 export type Move = -1 | 0 | 1;
-export type GameStatus = 'playing' | 'won' | 'unfocused' | 'menu';
 
 // Re-exported so existing imports of Tile/Position/Entity from './tiles' keep working.
 export { Tile };
 export type { Position };
 
-export class Empty extends RuleTile {
+export class Water extends RuleTile {
     constructor() { 
-        super(0, "empty"); 
+        super(0, "water"); 
         this.isPassable = false;
         this.defaultSprite = { x: 2, y: 0 };
 
@@ -200,9 +199,9 @@ export class Empty extends RuleTile {
     }
 }
 
-export class StaticEmpty extends StaticTile {
+export class StaticWater extends StaticTile {
     constructor() {
-        super({ x: 2, y: 0 }, 0, "empty");
+        super({ x: 2, y: 0 }, 0, "water");
         this.isPassable = false;
     }
 }
@@ -238,7 +237,7 @@ export class Wall extends StaticTile {
 
 
 const TileRegistry: Record<number, () => Tile> = {
-    0: () => new Empty(), // water
+    0: () => new Water(), // water
     1: () => new Ground(0), // ground (default)
     2: () => new GroundGrass(1), // ground (animated grass)
     3: () => new Wall(2), // defalt wall
@@ -283,12 +282,12 @@ export function mapToBoard(map: number[][]): Tile[][] {
                     row.push(createTile());
                 } else {
                     console.warn(`Unknown tile ID: ${tileId}`);
-                    row.push(new Empty());
+                    row.push(new Water());
                 }
             } else if (distance === 1) {
-                row.push(new Empty());
+                row.push(new Water());
             } else {
-                row.push(new StaticEmpty());
+                row.push(new StaticWater());
             }
         }
         grid.push(row);

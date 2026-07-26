@@ -137,6 +137,14 @@
 
 <div class="page">
 
+    {#if !interacted}
+        <div class="interact-overlay">
+            <div class="interact">
+                click to focus
+            </div>
+        </div>
+    {/if}
+
     <div class="wave-background" aria-hidden="true">
         {#each waveTiles as tile}
             <img
@@ -226,6 +234,29 @@
         top: 0;
         left: 0;
         padding: 8px;
+    }
+
+    .interact {
+        position: absolute;
+
+        padding: 8px;
+        font-size: clamp(1.5rem, 3vw, 2rem);
+        font-family: "Halogen";
+        background-color: var(--carrot-orange);
+        color: #fff;
+        user-select: none;
+    }
+
+    .interact-overlay {
+        position: absolute;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        top: 0; left: 0;
+        z-index: 99;
+        width: 100dvw; height: 100dvh;
+        backdrop-filter: blur(2px);
+        cursor: pointer;
     }
 
     :global(body) {
