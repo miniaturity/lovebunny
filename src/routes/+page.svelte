@@ -90,10 +90,6 @@
         playbackGame.move(x, y);
     }
 
-    function hideWinModal() {
-        showWinModal = false;
-    }
-
     function play() {
         game.status = "playing";
         showIntroModal = false;
@@ -105,6 +101,7 @@
         game = new Game(...DEMO_GAME);
         if (playing) game.status = "playing";
     }
+
 
     const closeModal = () => { if (game.status === "menu") game.status = "playing"; }
 
@@ -161,10 +158,11 @@
                 src={wave}
                 alt=""
                 style={`
-                top: ${tile.top}%;
-                left: ${tile.left}%;
-                width: ${tileDisplaySize}px;
-                height: ${tileDisplaySize}px;`}
+                    top: ${tile.top}%;
+                    left: ${tile.left}%;
+                    width: ${tileDisplaySize}px;
+                    height: ${tileDisplaySize}px;`
+                }
             />
         {/each}
     </div>
@@ -202,6 +200,7 @@
             </div>
         {/if}
     </header>
+
     <div class="game" bind:this={gameEl}>
         {#if tileSheet && characterSheet}
             <Board 
@@ -229,8 +228,7 @@
             </div>
         </div>
     </div>
-    
-   
+
 </div>
 
 <style lang="scss">

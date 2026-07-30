@@ -1,13 +1,24 @@
 <script lang="ts">
     import EditorBoard from "$lib/components/editorboard.svelte";
+    import EditorDeck, { type SolveStatus, type Tool } from "$lib/components/editor/EditorDeck.svelte";
     import ts from "$lib/assets/sprites/spritesheet.png";
     import cs from "$lib/assets/sprites/charactersheet.png";
-    import { Game, type GameParams } from "$lib/state/game.svelte";
-    import { DEMO_GAME } from "$lib/demo";
     import { onMount } from "svelte";
     import wave from "$lib/assets/images/wave.gif";
     import Navlink from "$lib/components/navlink.svelte";
     import { DEFAULT_GAME } from "$lib/levels/default";
+    import { solveLevel } from "$lib/state/solver";
+    import {
+        type LevelData,
+        cloneBoard,
+        clampPosition,
+        resizeBoard,
+        downloadLevel,
+        parseLevel,
+        MIN_BOARD_SIZE,
+        MAX_BOARD_SIZE
+    } from "$lib/data/leveldata";
+    import { getTile } from "$lib/state/tiles";
 
     let tileSheet = $state<HTMLImageElement>();
     let characterSheet = $state<HTMLImageElement>();
@@ -21,7 +32,7 @@
 
     function updateTileDisplaySize() {
         if (!gameEl) return;
-        const cols = game.board[0]?.length || 1;
+        const cols = level.board[0]?.length || 1;
         tileDisplaySize = gameEl.clientWidth / cols;
     }
 
@@ -48,11 +59,93 @@
         };
     });
 
-    let blueprint = $state<GameParams>(DEFAULT_GAME);
-    let game = $derived<Game>(new Game(...blueprint));
-
-    let brush = $state<number>(0);
+    const [initBoard, initA, initB, initTitle, initDay] = DEFAULT_GAME;
     
+    let level = $state<LevelData>({
+        board: cloneBoard(initBoard),
+        a: { ...initA },
+        b: { ...initB },
+        title: initTitle,
+        day: initDay,
+        author: "anonymous"
+    });
+
+    let tool = $state<Tool>(0);
+    let importError = $state<string | null>(null);
+
+    let rows = $derived(level.board.length);
+    let cols = $derived(level.board[0]?.length ?? 0);
+
+    let solveStatus = $state<SolveStatus>({ state: "checking" });
+
+    $effect(() => {
+        const board = level.board;
+        const a = level.a;
+        const b = level.b;
+
+        solveStatus = { state: "checking" };
+
+        const timer = setTimeout(() => {
+            const solution = solveLevel(board, a, b);
+            solveStatus = solution
+                ? { state: "solvable", moves: solution }
+                : { state: "unsolvable" };
+        }, 200);
+
+        return () => clearTimeout(timer);
+    });
+
+    function handleCell(x: number, y: number) {
+        if (typeof tool === "number") {
+            if (level.board[y]?.[x] === tool || (positionIsOnBunny(x, y) && !getTile(tool).isPassable)) return;
+            const nextBoard = cloneBoard(level.board);
+            nextBoard[y][x] = tool;
+            level.board = nextBoard;
+        } else if (tool === "bunnyA") {
+            if (level.a.x === x && level.a.y === y) return;
+            level.a = { x, y };
+        } else if (tool === "bunnyB") {
+            if (level.b.x === x && level.b.y === y) return;
+            level.b = { x, y };
+        }
+    }
+
+    function positionIsOnBunny(x: number, y: number) {
+        const isBunnyA = x === level.a.x && y === level.a.y;
+        const isBunnyB = x === level.b.x && y === level.b.y;
+
+        return isBunnyA && isBunnyB;
+    }
+
+    function handleResize(newRows: number, newCols: number) {
+        const nextRows = Math.min(Math.max(newRows, MIN_BOARD_SIZE), MAX_BOARD_SIZE);
+        const nextCols = Math.min(Math.max(newCols, MIN_BOARD_SIZE), MAX_BOARD_SIZE);
+
+        level.board = resizeBoard(level.board, nextRows, nextCols);
+        level.a = clampPosition(level.a, nextRows, nextCols);
+        level.b = clampPosition(level.b, nextRows, nextCols);
+    }
+
+    function handleExport() {
+        downloadLevel(level);
+    }
+
+    function handleImportFile(file: File) {
+        importError = null;
+
+        file.text()
+            .then((text) => {
+                try {
+                    level = parseLevel(text);
+                    tool = 1;
+                } catch (err) {
+                    importError = err instanceof Error ? err.message : "Could not import that file.";
+                }
+            })
+            .catch(() => {
+                importError = "Could not read that file.";
+            });
+    }
 </script>
 
 <div class="page">
@@ -78,12 +171,36 @@
         </Navlink>
     </div>
 
-    <div class="game" bind:this={gameEl}>
+    
+    <div class="editor-layout">
+        <div class="game" bind:this={gameEl}>
+            {#if tileSheet && characterSheet}
+                <EditorBoard
+                    board={level.board}
+                    a={level.a}
+                    b={level.b}
+                    {tool}
+                    {tileSheet}
+                    {characterSheet}
+                    onCell={handleCell}
+                />
+            {/if}
+        </div>
+
         {#if tileSheet && characterSheet}
-            <EditorBoard
-                {game}
+            <EditorDeck
+                bind:title={level.title}
+                bind:day={level.day}
+                {rows}
+                {cols}
+                bind:tool
                 {tileSheet}
                 {characterSheet}
+                {solveStatus}
+                {importError}
+                onResize={handleResize}
+                onExport={handleExport}
+                onImportFile={handleImportFile}
             />
         {/if}
     </div>
@@ -96,6 +213,7 @@
         top: 0;
         left: 0;
         padding: 8px;
+        z-index: 2;
     }
 
     .page {
@@ -107,6 +225,7 @@
         justify-content: center;
         background-color: var(--water-blue);
         overflow: hidden;
+        padding: 16px;
     }
 
     .wave-background {
@@ -123,9 +242,18 @@
         image-rendering: pixelated;
     }
 
-    .game {
+    .editor-layout {
         position: relative;
         z-index: 1;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        justify-content: center;
+        gap: 16px;
+    }
+
+    .game {
+        position: relative;
         width: clamp(320px, 40vw, 800px);
         aspect-ratio: 1 / 1;
     }

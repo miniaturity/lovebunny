@@ -246,6 +246,10 @@ const TileRegistry: Record<number, () => Tile> = {
     
 };
 
+export function getTile(id: number) {
+    return TileRegistry[id]();
+}
+
 export const BOARD_BORDER = 2;
 
 export function mapToBoard(map: number[][]): Tile[][] {

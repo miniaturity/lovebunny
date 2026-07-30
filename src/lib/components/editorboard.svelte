@@ -1,23 +1,41 @@
 <script lang="ts">
-    import { Game } from '$lib/state/game.svelte';
+    import { mapToBoard, BOARD_BORDER, getTile } from '$lib/state/tiles';
+    import type { Position } from '$lib/state/tile';
     import { type Rotation } from '$lib/state/ruletile';
-    import { type Entity } from '$lib/state/entity';
+    import { cloneBoard } from '$lib/data/leveldata';
 
     let {
-        game,
+        board,
+        a,
+        b,
+        tool,
         tileSheet,
-        characterSheet
+        characterSheet,
+        onCell
     }: {
-        game: Game;
+        board: number[][];
+        a: Position;
+        b: Position;
+        tool: number | 'bunnyA' | 'bunnyB';
         tileSheet: HTMLImageElement;
         characterSheet: HTMLImageElement;
+        onCell: (x: number, y: number) => void;
     } = $props();
 
     let canvasRef: HTMLCanvasElement;
+    let painting = false;
+    let lastCell: { x: number; y: number } | null = null;
+    let hoveredCell = $state<{ x: number; y: number } | null>(null);
 
     const TILE_SIZE = 16;
     const SPRITE_SIZE = 16;
+    const SCALE = 4;
 
+    let renderBoard = $derived(mapToBoard(board));
+    let boardStandin = $derived({ board: renderBoard } as unknown as import('$lib/state/game.svelte').Game);
+
+    let canvasWidth = $derived((renderBoard[0]?.length ?? 0) * TILE_SIZE * SCALE);
+    let canvasHeight = $derived(renderBoard.length * TILE_SIZE * SCALE);
 
     function getTileBorderColor(): string {
         const fallback = 'rgba(253, 224, 244, 0.5)';
@@ -54,8 +72,6 @@
         const tileBorderColor = getTileBorderColor();
         let animationFrameId: number;
 
-        const SCALE = 4;
-
         function render(timestamp: number) {
             if (!ctx) return;
 
@@ -65,13 +81,19 @@
             ctx.imageSmoothingEnabled = false;
             ctx.scale(SCALE, SCALE);
 
-            for (let y = 0; y < game.board.length; y++) {
-                for (let x = 0; x < game.board[y].length; x++) {
-                    const tile = game.board[y][x];
-                    const spriteCoord = tile.getSprite(game, x, y, timestamp);
+            for (let y = 0; y < renderBoard.length; y++) {
+                for (let x = 0; x < renderBoard[y].length; x++) {
+                    const tile = renderBoard[y][x];
+                    let spriteCoord = tile.getSprite(boardStandin, x, y, timestamp);
 
-                    const rotationAngle = 'rotationAngle' in spriteCoord ? spriteCoord.rotationAngle as Rotation : 0;
+                    const rotationAngle = 'rotationAngle' in spriteCoord ? (spriteCoord.rotationAngle as Rotation) : 0;
                     const flipX = 'flipX' in spriteCoord ? spriteCoord.flipX : false;
+
+                    if (typeof tool === "number" && x - BOARD_BORDER === hoveredCell?.x && y - BOARD_BORDER === hoveredCell?.y) { 
+                        renderBoard[y][x] = getTile(tool);
+                        spriteCoord = getTile(tool).getSprite(boardStandin, x, y, timestamp);
+                    
+                    }
 
                     if (rotationAngle === 0 && !flipX) {
                         ctx.drawImage(
@@ -97,24 +119,35 @@
                         ctx.restore();
                     }
 
+                    const isEditable = x > 1 && x < renderBoard[0].length - 2 && y > 1 && y < renderBoard.length - 2;
+                    if (isEditable) {
+                        ctx.strokeStyle = tileBorderColor;
+                        ctx.lineWidth = 1 / SCALE;
+                        const offset = (1 / SCALE) / 2;
 
-                    if (x <= 1 || x >= game.board.length - 2) continue;
-                    if (y <= 1 || y >= game.board.length - 2) continue;
-                    ctx.strokeStyle = tileBorderColor;
-                    ctx.lineWidth = 1 / SCALE;
-                    const offset = (1 / SCALE) / 2;
-
-                    ctx.strokeRect(
-                        x * TILE_SIZE + offset,
-                        y * TILE_SIZE + offset,
-                        TILE_SIZE - (offset * 2),
-                        TILE_SIZE - (offset * 2)
-                    );
+                        ctx.strokeRect(
+                            x * TILE_SIZE + offset,
+                            y * TILE_SIZE + offset,
+                            TILE_SIZE - (offset * 2),
+                            TILE_SIZE - (offset * 2)
+                        );
+                    }
                 }
             }
 
-            drawEntity(ctx, game.a, 0, timestamp);
-            drawEntity(ctx, game.b, 1, timestamp);
+            if (hoveredCell) {
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 1.5 / SCALE;
+                ctx.strokeRect(
+                    (hoveredCell.x + BOARD_BORDER) * TILE_SIZE + 1,
+                    (hoveredCell.y + BOARD_BORDER) * TILE_SIZE + 1,
+                    TILE_SIZE - 2,
+                    TILE_SIZE - 2
+                );
+            }
+
+            drawEntity(ctx, a, 0, timestamp);
+            drawEntity(ctx, b, 1, timestamp);
 
             animationFrameId = requestAnimationFrame(render);
         }
@@ -129,7 +162,7 @@
 
     function drawEntity(
         ctx: CanvasRenderingContext2D,
-        entity: Entity,
+        pos: Position,
         entityRow: number,
         timestamp: number
     ) {
@@ -138,16 +171,12 @@
         const IDLE_FRAME_MS = 400;
         const frameIndex = Math.floor(timestamp / IDLE_FRAME_MS) % 2;
 
-        const destX = entity.pos.x * TILE_SIZE;
-        const destY = entity.pos.y * TILE_SIZE;
+        const destX = (pos.x + BOARD_BORDER) * TILE_SIZE;
+        const destY = (pos.y + BOARD_BORDER) * TILE_SIZE;
 
         const centerX = destX + (TILE_SIZE / 2);
         const centerY = destY + (TILE_SIZE / 2);
         ctx.translate(centerX, centerY);
-
-        if (entity.facing === 'left') {
-            ctx.scale(-1, 1);
-        }
 
         const srcX = frameIndex * SPRITE_SIZE;
         const srcY = entityRow * SPRITE_SIZE;
@@ -162,19 +191,91 @@
 
         ctx.restore();
     }
+
+    function cellFromPointer(e: PointerEvent): { x: number; y: number } | null {
+        const rect = canvasRef.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0) return null;
+
+        const scaleX = canvasRef.width / rect.width;
+        const scaleY = canvasRef.height / rect.height;
+
+        const px = (e.clientX - rect.left) * scaleX;
+        const py = (e.clientY - rect.top) * scaleY;
+
+        const paddedX = Math.floor(px / (TILE_SIZE * SCALE));
+        const paddedY = Math.floor(py / (TILE_SIZE * SCALE));
+
+        const x = paddedX - BOARD_BORDER;
+        const y = paddedY - BOARD_BORDER;
+
+        const rows = board.length;
+        const cols = board[0]?.length ?? 0;
+        if (x < 0 || y < 0 || x >= cols || y >= rows) return null;
+
+        return { x, y };
+    }
+
+    function handlePointerDown(e: PointerEvent) {
+        const cell = cellFromPointer(e);
+        if (!cell) return;
+
+        canvasRef.setPointerCapture(e.pointerId);
+        painting = true;
+        lastCell = cell;
+        onCell(cell.x, cell.y);
+    }
+
+    function handlePointerMove(e: PointerEvent) {
+        const cell = cellFromPointer(e);
+        hoveredCell = cell;
+        if (!cell) return;
+        
+        if (painting && (!lastCell || lastCell.x !== cell.x || lastCell.y !== cell.y)) {
+            lastCell = cell;
+            onCell(cell.x, cell.y);
+        }
+    }
+
+    function stopPainting() {
+        painting = false;
+        lastCell = null;
+    }
+
+    $effect(() => {
+        hoveredCell;
+
+        if (!painting && hoveredCell && hoveredCell.x !== lastCell?.x && hoveredCell.y !== lastCell?.y) {
+            renderBoard = mapToBoard(cloneBoard(board));
+        }
+
+        if (!hoveredCell) {
+            renderBoard = mapToBoard(cloneBoard(board));
+        }
+    })
 </script>
 
 <canvas
     bind:this={canvasRef}
-    width={(game.board[0]?.length * TILE_SIZE || 0) * 4}
-    height={(game.board.length * TILE_SIZE || 0) * 4}
+    width={canvasWidth}
+    height={canvasHeight}
     class="editor-canvas"
+    class:tool-bunny={tool === 'bunnyA' || tool === 'bunnyB'}
+    onpointerdown={handlePointerDown}
+    onpointermove={handlePointerMove}
+    onpointerup={stopPainting}
+    onpointercancel={stopPainting}
+    onpointerleave={() => { hoveredCell = null; }}
 ></canvas>
 
 <style>
     .editor-canvas {
         width: 100%; height: 100%;
+        touch-action: none;
 
         image-rendering: pixelated;
+    }
+
+    .editor-canvas.tool-bunny {
+        cursor: pointer;
     }
 </style>

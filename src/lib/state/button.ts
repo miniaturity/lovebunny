@@ -12,6 +12,4 @@ export class Button extends Entity {
     public effectorEnter(game: Game): void {
         // TODO: disable isPassable on every tile of disableId.
     }
-
-    
 }
