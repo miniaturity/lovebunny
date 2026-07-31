@@ -223,6 +223,7 @@
             onExport={handleExport}
             onImportFile={handleImportFile}
             bind:editorMode
+            {game}
         />
     {/if}
 

@@ -26,12 +26,11 @@
 
     let isNewUser = $state<boolean>(false);
     let canShowModal = $state<boolean>(true);
-    let showIntroModal = $derived<boolean>(true);
+    let showIntroModal = $derived<boolean>(isNewUser);
     let showWinModal = $derived<boolean>(game.status === "won");
 
     const TILE_SIZE = 16;
 
-    // Randomly scattered background wave gifs, sized to match the board tiles.
     const WAVE_COUNT = 24;
     let waveTiles = $state<{ top: number; left: number }[]>([]);
     let gameEl = $state<HTMLDivElement>();
@@ -53,6 +52,8 @@
         if (!$hasVisited) {
             isNewUser = true;
             $hasVisited = true;
+        } else {
+            game.status = "playing";
         }
 
         waveTiles = Array.from({ length: WAVE_COUNT }, () => ({

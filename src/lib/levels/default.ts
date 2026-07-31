@@ -17,7 +17,7 @@ const DAY = -1;
 export const DEFAULT_GAME: GameParams = [
     LEVEL,
     { x: 0, y: 0 }, 
-    { x: 4, y: 4 },
+    { x: 7, y: 7 },
     TITLE,
     DAY
 ]

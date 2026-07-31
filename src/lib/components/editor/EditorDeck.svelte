@@ -1,6 +1,6 @@
 <script lang="ts">
     import { BRUSHES, MIN_BOARD_SIZE, MAX_BOARD_SIZE } from '$lib/data/leveldata';
-    import type { EditorMode, MoveName } from '$lib/state/game.svelte';
+    import { Game, type EditorMode, type MoveName } from '$lib/state/game.svelte';
     import Button from '../button.svelte';
 
     export type SolveStatus =
@@ -23,7 +23,8 @@
         onResize,
         onExport,
         onImportFile,
-        editorMode = $bindable()
+        editorMode = $bindable(),
+        game
     }: {
         title: string;
         day: number;
@@ -38,6 +39,7 @@
         onExport: () => void;
         onImportFile: (file: File) => void;
         editorMode: EditorMode;
+        game: Game;
     } = $props();
 
 
@@ -157,6 +159,12 @@
     <Button disabled={solveStatus.state === "unsolvable" || solveStatus.state === "checking"} style={`background-color: ${editorMode === "play" ? "var(--carrot-orange)" : "var(--grass-green)"}`} onclick={() => editorMode = editorMode === "edit" ? "play" : "edit"}>
         {editorMode === "edit" ? "Play" : "Edit"}
     </Button>
+    
+    {#if editorMode === "play"}
+        <div class="moves">
+            {game.moves.length} move{game.moves.length === 1 ? "" : "s"}
+        </div>
+    {/if}
 </section>
 
 <section class="file-deck">
@@ -192,6 +200,8 @@
     }
 
 
+
+
     .checking {
         background-color: var(--carrot-orange);
         color: #fff;
@@ -214,6 +224,17 @@
     .edit {
         background-color: var(--carrot-orange) !important;
     }
+
+    .moves {
+        display: flex;
+        align-items: center; justify-content: center;
+        padding: 8px;
+        font-family: "Halogen";
+        color: #000;
+        background-color: #fff;
+        font-size: clamp(1.2rem, 1.2vw, 1.5rem);
+    }
+
     .solve-indicator {
         display: flex;
         flex-direction: row;
@@ -235,6 +256,7 @@
     .size-editor {
         display: flex;
         flex-direction: row;
+        font-family: monospace
     }
 
     .board-deck {

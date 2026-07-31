@@ -127,6 +127,15 @@ export class Water extends RuleTile {
                 mirrorX: true
             },
             {
+                // inner corner + wall (horizontal weird)
+                pattern: [1, null, 0, null, 1, 0, 1, 1],
+                sprite: [
+                    { x: 7, y: 2 },
+                    { x: 8, y: 2 }
+                ],
+                initRotation: 90,
+            },
+            {
                 // inner corner + wall (non-north)
                 pattern: [1, 0, 1, null, 0, null, 1, null],
                 sprite: [
@@ -136,6 +145,7 @@ export class Water extends RuleTile {
                 mirrorX: true,
                 rotations: true
             },
+            
             {
                 // inner corner (concave)
                 pattern: [1, 0, 1, null, null, null, null, null],
