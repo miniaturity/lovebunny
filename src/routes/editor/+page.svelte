@@ -19,6 +19,8 @@
         MAX_BOARD_SIZE
     } from "$lib/data/leveldata";
     import { getTile } from "$lib/state/tiles";
+    import Board from "$lib/components/board.svelte";
+    import { Game, type EditorMode } from "$lib/state/game.svelte";
 
     let tileSheet = $state<HTMLImageElement>();
     let characterSheet = $state<HTMLImageElement>();
@@ -70,6 +72,9 @@
         author: "anonymous"
     });
 
+
+    let editorMode = $state<EditorMode>("edit");
+    let game = $derived<Game>(new Game(level.board, level.a, level.b, level.title, level.day));
     let tool = $state<Tool>(0);
     let importError = $state<string | null>(null);
 
@@ -146,6 +151,15 @@
                 importError = "Could not read that file.";
             });
     }
+
+    $effect(() => {
+        if (editorMode === "play") {
+            game.status = "playing";
+        } else if (editorMode === "edit" && game.status !== "menu") {
+            game = new Game(level.board, level.a, level.b, level.title, level.day);
+            game.status = "menu";
+        }
+    })
 </script>
 
 <div class="page">
@@ -174,7 +188,7 @@
     
     <div class="editor-layout">
         <div class="game" bind:this={gameEl}>
-            {#if tileSheet && characterSheet}
+            {#if tileSheet && characterSheet && editorMode === "edit"}
                 <EditorBoard
                     board={level.board}
                     a={level.a}
@@ -184,26 +198,33 @@
                     {characterSheet}
                     onCell={handleCell}
                 />
+            {:else if tileSheet && characterSheet}
+                <Board 
+                    {game}
+                    {tileSheet}
+                    {characterSheet}
+                />
             {/if}
         </div>
-
-        {#if tileSheet && characterSheet}
-            <EditorDeck
-                bind:title={level.title}
-                bind:day={level.day}
-                {rows}
-                {cols}
-                bind:tool
-                {tileSheet}
-                {characterSheet}
-                {solveStatus}
-                {importError}
-                onResize={handleResize}
-                onExport={handleExport}
-                onImportFile={handleImportFile}
-            />
-        {/if}
     </div>
+
+    {#if tileSheet && characterSheet}
+        <EditorDeck
+            bind:title={level.title}
+            bind:day={level.day}
+            {rows}
+            {cols}
+            bind:tool
+            {tileSheet}
+            {characterSheet}
+            {solveStatus}
+            {importError}
+            onResize={handleResize}
+            onExport={handleExport}
+            onImportFile={handleImportFile}
+            bind:editorMode
+        />
+    {/if}
 
 </div>
 

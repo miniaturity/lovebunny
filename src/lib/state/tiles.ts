@@ -22,6 +22,14 @@ export class Water extends RuleTile {
         // out-of-bounds), null = don't care.
         this.rules = [
             {
+                // solid: completely surrounded by ground,
+                pattern: [0, null, 0, null, 0, null, 0, null],
+                sprite: [
+                    { x: 5, y: 2 },
+                    { x: 6, y: 2 } 
+                ]
+            },
+            {
                 // solid: completely surrounded by water -> deep water.
                 pattern: [1, 1, 1, 1, 1, 1, 1, 1],
                 sprite: { x: 2, y: 0 }
@@ -73,6 +81,16 @@ export class Water extends RuleTile {
                 rotations: true
             },
             {
+                // inner corner x3
+                pattern: [1, 1, 1, 0, 1, 0, 1, 0],
+                sprite: [
+                    { x: 2, y: 1 },
+                    { x: 3, y: 1 }
+                ],
+                rotations: true,
+                initRotation: 180
+            },
+            {
                 // inner corner x2 + wall (north)
                 pattern: [0, null, 1, 0, 1, 0, 1, null],
                 sprite: [
@@ -115,6 +133,7 @@ export class Water extends RuleTile {
                     { x: 0, y: 2 },
                     { x: 1, y: 2 }
                 ],
+                mirrorX: true,
                 rotations: true
             },
             {

@@ -9,6 +9,7 @@
         onclick,
         disabled,
         className = "",
+        overrideStyles = false
     }: {
         children: Snippet;
         className?: string;
@@ -16,13 +17,14 @@
         href?: string;
         disabled?: boolean;
         onclick?: () => void;
+        overrideStyles?: boolean;
     } = $props();
 
     let sign = $state<number>(Math.random() < 0.5 ? -1 : 1);
 
     let seed = $state<number>(Math.random() * 5 + 1)
     let computedStyle = $derived(`--seed: ${sign * seed}; ${style}`.trim());
-    let computedClass = $derived(`btn ${className}`.trim());
+    let computedClass = $derived(`${className}${overrideStyles ? " minimal-btn" : " btn"}`);
 
     onMount(() => {
         const interval = setInterval(() => {
@@ -56,6 +58,16 @@
         text-decoration: none;
         box-shadow: 2px 2px #000;
 
+        animation: rotate 3.2s steps(3) infinite;
+
+        &:disabled {
+            cursor: not-allowed;
+            filter: grayscale(1) brightness(0.5);
+        }
+    }
+
+    .minimal-btn {
+        cursor: pointer;
         animation: rotate 3.2s steps(3) infinite;
 
         &:disabled {

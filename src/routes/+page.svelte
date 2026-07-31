@@ -405,8 +405,4 @@
         }
     }
 
-    @font-face {
-        font-family: "Halogen";
-        src: url("$lib/assets/fonts/Halogen.ttf")
-    }
 </style>

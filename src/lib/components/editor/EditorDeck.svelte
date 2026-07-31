@@ -1,6 +1,7 @@
 <script lang="ts">
     import { BRUSHES, MIN_BOARD_SIZE, MAX_BOARD_SIZE } from '$lib/data/leveldata';
-    import type { MoveName } from '$lib/state/game.svelte';
+    import type { EditorMode, MoveName } from '$lib/state/game.svelte';
+    import Button from '../button.svelte';
 
     export type SolveStatus =
         | { state: 'checking' }
@@ -21,7 +22,8 @@
         importError,
         onResize,
         onExport,
-        onImportFile
+        onImportFile,
+        editorMode = $bindable()
     }: {
         title: string;
         day: number;
@@ -35,6 +37,7 @@
         onResize: (rows: number, cols: number) => void;
         onExport: () => void;
         onImportFile: (file: File) => void;
+        editorMode: EditorMode;
     } = $props();
 
 
@@ -64,24 +67,311 @@
         if (file) onImportFile(file);
         input.value = '';
     }
+
+    let statusHidden = $state<boolean>(true);
 </script>
 
-<div class="deck">
-    
+<section class="swatches-deck">
+
+
     <div class="swatches">
         {#each BRUSHES as brush (brush.tileId)}
-            <button
-                class="swatch"
-                class:selected={tool === brush.tileId}
-                title={brush.name}
-                onclick={() => (tool = brush.tileId)}
-            >
-                <span class="icon" style={iconStyle(tileSheet, TILE_SHEET_SIZE, brush.sprite)}></span>
-            </button>
+            <div class="swatch-wrapper">
+                <Button
+                    className={`${tool === brush.tileId ? "swatch selected" : "swatch"}`}
+                    onclick={() => (tool = brush.tileId)}
+                    overrideStyles
+                >
+                    <span class="icon" style={iconStyle(tileSheet, TILE_SHEET_SIZE, brush.sprite)}></span>
+                    
+                </Button>
+                <div class="swatch-name">
+                    {brush.name}
+                </div>
+            </div>
         {/each}
+
+        <div class="swatch-wrapper">
+            <Button
+                    className={`${tool === "bunnyA" ? "b-swatch selected" : "b-swatch"}`}
+                    onclick={() => (tool = "bunnyA")}
+                    overrideStyles
+                >
+                    <span class="icon" style={iconStyle(characterSheet, CHAR_SHEET_SIZE, { x: 0, y: 0 })}></span>
+                    
+                </Button>
+                <div class="swatch-name">
+                    white bunny
+                </div>
+        </div>
+
+        <div class="swatch-wrapper">
+                <Button
+                    className={`${tool === "bunnyB" ? "b-swatch selected" : "b-swatch"}`}
+                    onclick={() => (tool = "bunnyB")}
+                    overrideStyles
+                >
+                    <span class="icon" style={iconStyle(characterSheet, CHAR_SHEET_SIZE, { x: 0, y: 1 })}></span>
+                    
+                </Button>
+                <div class="swatch-name">
+                    brown bunny
+                </div>
+        </div>
     </div>
-</div>
+
+
+</section>
+
+
+
+<section class="board-deck">
+    <div class="size">
+        <div class="indicator">{rows}<span class="sub-indicator">&nbsp;R</span></div>
+        <div class="indicator">{cols}<span class="sub-indicator">&nbsp;C</span></div>
+    </div>
+
+    <div class="size-editor">
+        <Button onclick={() => onResize(rows + 1, cols + 1)} style="flex-grow: 1">
+            +
+        </Button>
+        <Button onclick={() => onResize(rows - 1, cols - 1)} style="flex-grow: 1; background-color: #c20202;">
+            -
+        </Button>
+    </div>
+</section>
+
+<section class="solve-indicator">
+    <Button onclick={() => statusHidden = !statusHidden } style={`background-color: ${!statusHidden ? "var(--carrot-orange)" : "#c20202"};`}>
+        {statusHidden ? "Show" : "Hide"}
+    </Button>
+
+    {#if solveStatus.state === "checking"}
+        <div class={`checking ${statusHidden ? "hide" : ""}`}>solving...</div>
+    {:else if solveStatus.state === "solvable"}
+        <div class={`solvable ${statusHidden ? "hide" : ""}`}>solvable in {solveStatus.moves.length} move{solveStatus.moves.length === 1 ? '' : 's'}</div>
+    {:else}
+        <div class={`unsolvable ${statusHidden ? "hide" : ""}`}>unsolvable!</div>
+    {/if}
+
+    <Button disabled={solveStatus.state === "unsolvable" || solveStatus.state === "checking"} style={`background-color: ${editorMode === "play" ? "var(--carrot-orange)" : "var(--grass-green)"}`} onclick={() => editorMode = editorMode === "edit" ? "play" : "edit"}>
+        {editorMode === "edit" ? "Play" : "Edit"}
+    </Button>
+</section>
+
+<section class="file-deck">
+    <Button className="export" onclick={onExport}>
+        export
+    </Button>
+    <Button className="import" onclick={() => fileInput?.click()} style="background-color: var(--carrot-orange)">
+        import
+    </Button>
+    <input
+        bind:this={fileInput}
+        type="file"
+        accept="application/json,.json"
+        onchange={handleFileChange}
+        hidden
+    />
+</section>
 
 <style lang="scss">
+    .file-deck {
+        display: flex;
+        flex-direction: row;
+
+        position: absolute;
+        top: 0;
+        padding: 8px;
+        gap: 8px;
+    }
+
+    .hide {
+        filter: blur(8px);
+        overflow: hidden;
+    }
+
+
+    .checking {
+        background-color: var(--carrot-orange);
+        color: #fff;
+    }
+
+    .solvable {
+        background-color: var(--grass-green);
+        color: #fff;
+    }
+
+    .unsolvable {
+        background-color: #c20202;
+        color: #fff;
+    }
+
+    .play {
+        background-color: var(--grass-green) !important;
+    }
+
+    .edit {
+        background-color: var(--carrot-orange) !important;
+    }
+    .solve-indicator {
+        display: flex;
+        flex-direction: row;
+        gap: 8px;
+        position: absolute;
+        bottom: 0;
+        padding: 8px;
+
+        font-family: "Halogen";
+
+        & div {
+            padding: 8px;
+            display: flex;
+            align-items: center; justify-content: center;
+            box-shadow: 2px 2px #000;
+        }
+    }
+
+    .size-editor {
+        display: flex;
+        flex-direction: row;
+    }
+
+    .board-deck {
+        position: absolute;
+        left: 0;
+        padding: 8px;
+
+        font-family: "Halogen";
+        color: #000;
+
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .size {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .indicator {
+        height: 35px;
+        padding: 8px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: clamp(1.2rem, 1.5vw, 1.6rem);
+        background-color: #fff;
+    }
+
+    .sub-indicator {
+        color: #969696;
+        font-size: clamp(1rem, 1.1vw, 1.4rem);
+    }
+
+    .swatches-deck {
+        position: absolute;
+        right: 0;
+        padding: 8px;
+    }
+
+    
+
+    .swatches {
+        max-height: 100vh;
+        gap: 8px;
+
+        display: flex;
+        flex-direction: column;
+    }
+
+    :global(.swatch-wrapper) {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    :global(.swatch-wrapper:hover) {
+        .swatch-name {
+            margin-left: -200%;
+            opacity: 1;
+        }
+    }
+
+    :global(.swatch-wrapper:has(.swatch.selected)) {
+        .swatch-name {
+            margin-left: -200%;
+            opacity: 1;
+        }
+    }
+
+    :global(.swatch-wrapper:has(.b-swatch.selected)) {
+        .swatch-name {
+            margin-left: -200%;
+            opacity: 1;
+        }
+    }
+
+    :global(.b-swatch) {
+        width: 65px; height: 65px;
+        position: relative;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        border: 3px solid transparent;
+        background-color: var(--grass-green);
+        padding: 4px !important;
+        cursor: pointer;
+
+        & .icon {
+            display: block;
+            image-rendering: pixelated;
+        }
+
+        &:hover {
+            border-color: var(--carrot-orange);
+        }
+    }
+
+    :global(.swatch) {
+        width: 65px; height: 65px;
+        position: relative;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        border: 3px solid transparent;
+        background-color: #fff;
+        padding: 4px !important;
+        cursor: pointer;
+
+        & .icon {
+            display: block;
+            image-rendering: pixelated;
+        }
+
+        &:hover {
+            border-color: var(--carrot-orange);
+        }
+    }
+
+    .swatch-name {
+        position: absolute;
+        font-family: "Halogen";
+        color: #fff;
+        pointer-events: none;
+        margin-left: 200%;
+        opacity: 0;
         
+        transition: margin 0.3s ease-in-out, opacity 0.3s ease-in-out;
+
+    }
+
+    :global(.selected) {
+        border-color: var(--carrot-orange);
+    }
+
 </style>

@@ -20,6 +20,11 @@
         --water-blue: #5fade4;
         --lpink: #fde0f4;
     }
+
+    @font-face {
+        font-family: "Halogen";
+        src: url("$lib/assets/fonts/Halogen.ttf")
+    }
 </style>
 
 {@render children()}

@@ -2,7 +2,6 @@
     import { mapToBoard, BOARD_BORDER, getTile } from '$lib/state/tiles';
     import type { Position } from '$lib/state/tile';
     import { type Rotation } from '$lib/state/ruletile';
-    import { cloneBoard } from '$lib/data/leveldata';
 
     let {
         board,
@@ -83,17 +82,16 @@
 
             for (let y = 0; y < renderBoard.length; y++) {
                 for (let x = 0; x < renderBoard[y].length; x++) {
-                    const tile = renderBoard[y][x];
-                    let spriteCoord = tile.getSprite(boardStandin, x, y, timestamp);
+                    const isHoveredPreview =
+                        typeof tool === 'number' &&
+                        x - BOARD_BORDER === hoveredCell?.x &&
+                        y - BOARD_BORDER === hoveredCell?.y;
+
+                    const tile = isHoveredPreview ? getTile(tool) : renderBoard[y][x];
+                    const spriteCoord = tile.getSprite(boardStandin, x, y, timestamp);
 
                     const rotationAngle = 'rotationAngle' in spriteCoord ? (spriteCoord.rotationAngle as Rotation) : 0;
                     const flipX = 'flipX' in spriteCoord ? spriteCoord.flipX : false;
-
-                    if (typeof tool === "number" && x - BOARD_BORDER === hoveredCell?.x && y - BOARD_BORDER === hoveredCell?.y) { 
-                        renderBoard[y][x] = getTile(tool);
-                        spriteCoord = getTile(tool).getSprite(boardStandin, x, y, timestamp);
-                    
-                    }
 
                     if (rotationAngle === 0 && !flipX) {
                         ctx.drawImage(
@@ -241,17 +239,6 @@
         lastCell = null;
     }
 
-    $effect(() => {
-        hoveredCell;
-
-        if (!painting && hoveredCell && hoveredCell.x !== lastCell?.x && hoveredCell.y !== lastCell?.y) {
-            renderBoard = mapToBoard(cloneBoard(board));
-        }
-
-        if (!hoveredCell) {
-            renderBoard = mapToBoard(cloneBoard(board));
-        }
-    })
 </script>
 
 <canvas
