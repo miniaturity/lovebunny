@@ -2,7 +2,7 @@
     import Board from "$lib/components/board.svelte";
     import ts from "$lib/assets/sprites/spritesheet.png";
     import cs from "$lib/assets/sprites/charactersheet.png";
-    import { Game, MOVE_DICT, type MoveName } from "$lib/state/game.svelte";
+    import { Game, MOVE_DICT, type GameParams, type MoveName } from "$lib/state/game.svelte";
     import { DEMO_GAME } from "$lib/demo";
     import { onMount } from "svelte";
     import { hasVisited } from "$lib/state/store";
@@ -16,12 +16,15 @@
     import Navlink from "$lib/components/navlink.svelte";
     import Winmodal from "$lib/components/winmodal.svelte";
 
+    let { data } = $props();
+    const DAILY: GameParams = $derived([data.daily.board, data.daily.a, data.daily.b, data.daily.title, data.daily.day]);
+
 
     let tileSheet = $state<HTMLImageElement>();
     let characterSheet = $state<HTMLImageElement>();
 
-    let game = $state<Game>(new Game(...DEMO_GAME));
-    let playbackGame = $state<Game>(new Game(...DEMO_GAME));
+    let game = $derived<Game>(new Game(...DAILY));
+    let playbackGame = $derived<Game>(new Game(...DAILY));
     let moves = $derived<MoveName[]>(game.moves);
 
     let isNewUser = $state<boolean>(false);
@@ -77,7 +80,7 @@
     async function playback(moves: MoveName[]) {
         if (game.status !== "won") return;
         game.status = "playback";
-        playbackGame = new Game(...DEMO_GAME);
+        playbackGame = new Game(...DAILY);
         playbackGame.status = "playback";
 
         for (let i = 0; i < moves.length; i++) {
@@ -99,7 +102,7 @@
 
     function reset(playing: boolean = true) {
         if (game.status === "won") return;
-        game = new Game(...DEMO_GAME);
+        game = new Game(...DAILY);
         if (playing) game.status = "playing";
     }
 
