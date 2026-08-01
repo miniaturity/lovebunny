@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import type { LevelData } from '$lib/data/leveldata';
+import { normalizeLevelPayload, type LevelData } from '$lib/data/leveldata';
 
 export const load: PageServerLoad = async ({ platform }): Promise<{ daily: LevelData }> => {
     const bucket = platform?.env.lovebunny_levels;
@@ -10,5 +10,8 @@ export const load: PageServerLoad = async ({ platform }): Promise<{ daily: Level
     const obj = (await bucket.get(`daily/${today}.json`)) ?? (await bucket.get('daily/latest.json'));
     if (!obj) throw error(404, 'No daily level available yet');
 
-    return { daily: await obj.json<LevelData>() };
+    const daily = normalizeLevelPayload(await obj.json<unknown>());
+    if (!daily?.board) throw error(500, 'Stored daily level is malformed');
+
+    return { daily };
 };

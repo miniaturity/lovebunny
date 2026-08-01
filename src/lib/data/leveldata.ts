@@ -13,6 +13,21 @@ export interface LevelData {
 export const MIN_BOARD_SIZE = 3;
 export const MAX_BOARD_SIZE = 20;
 
+/**
+ * Daily levels are sometimes stored in R2 wrapped in a `{ date, level }`
+ * envelope (e.g. when an object is uploaded straight from the Cloudflare
+ * dashboard using the same shape the admin PUT endpoint accepts), rather
+ * than as a bare LevelData object (the shape the admin endpoint actually
+ * persists). Accept either shape so a stray envelope doesn't crash
+ * mapToBoard with `board` being undefined.
+ */
+export function normalizeLevelPayload(raw: unknown): LevelData {
+    if (raw && typeof raw === 'object' && 'level' in raw && !('board' in raw)) {
+        return (raw as { level: LevelData }).level;
+    }
+    return raw as LevelData;
+}
+
 export interface Brush {
     tileId: number;
     name: string;
