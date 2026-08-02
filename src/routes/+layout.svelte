@@ -11,10 +11,10 @@
     <meta property="og:url" content="https://bunniesin.love" />
     <meta property="og:title" content="bunniesin.love" />
     <meta property="og:image" content="https://bunniesin.love/bunniesinlove.png" />
-
+    <meta property="og:description" content="A puzzle game about two lover bunnies!" />
     <meta name="twitter:card" content="summary_large_image" /> 
     <meta name="twitter:image" content="https://bunniesin.love/bunniesinlove.png" />
-    
+
     <meta name="theme-color" content="#5fade4" />
 </svelte:head>
 
