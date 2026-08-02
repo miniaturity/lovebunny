@@ -10,10 +10,12 @@
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://bunniesin.love" />
     <meta property="og:title" content="bunniesin.love" />
-    <meta property="og:description" content="puzzle game about bunnies in love" />
     <meta property="og:image" content="https://bunniesin.love/bunniesinlove.png" />
 
     <meta name="twitter:card" content="summary_large_image" /> 
+    <meta name="twitter:image" content="https://bunniesin.love/bunniesinlove.png" />
+    
+    <meta name="theme-color" content="#5fade4" />
 </svelte:head>
 
 <style lang="scss">
