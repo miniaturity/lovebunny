@@ -1,42 +1,20 @@
-# sv
+## bunniesin.love
+> https://bunniesin.love
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+a puzzle game about two lover bunnies!
 
-## Creating a project
+their hearts are tethered together, but they're seperated.. bring them back together!
 
-If you're seeing this, you've probably already done this step. Congrats!
+> made with svelte/ts/scss, hosted by cloudflare (pages, R2 storage)
 
-```sh
-# create a new project
-npx sv create my-app
-```
+## features
+- ~~daily puzzles!~~ (disabled in beta, currently defaults to the same puzzle)
+- full tutorial
+- level editor (with import/export)
+- mobile compatability
+- ~~score distribution~~ (disabled in beta)
+- two bunnies
 
-To recreate this project with the same configuration:
-
-```sh
-# recreate this project
-npx sv@0.16.3 create --template minimal --types ts --install npm ./
-```
-
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```sh
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
-
-## Building
-
-To create a production version of your app:
-
-```sh
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+## contributing
+currently, i dont accept any contributions, pull requests, or feature requests.  
+report any bugs to me!
