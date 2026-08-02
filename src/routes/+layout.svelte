@@ -6,6 +6,12 @@
 
 <svelte:head>
 	<link rel="icon" href={favicon} />
+
+    <meta property="og:type" content="website" />
+		<meta property="og:url" content="https://bunniesin.love" />
+		<meta property="og:title" content="bunniesin.love" />
+		<meta property="og:description" content="puzzle game about bunnies in love" />
+		<meta property="og:image" content="https://bunniesin.love/bunniesinlove.png" />
 </svelte:head>
 
 <style lang="scss">
