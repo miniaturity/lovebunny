@@ -64,7 +64,13 @@
             cursor: not-allowed;
             filter: grayscale(1) brightness(0.5);
         }
+
+        @media screen and (max-width: 768px) {
+            font-size: 0.9rem;
+        }
     }
+
+
 
     .minimal-btn {
         cursor: pointer;

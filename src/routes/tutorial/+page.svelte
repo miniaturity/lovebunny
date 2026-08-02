@@ -2,7 +2,7 @@
     import Board from "$lib/components/board.svelte";
     import ts from "$lib/assets/sprites/spritesheet.png";
     import cs from "$lib/assets/sprites/charactersheet.png";
-    import { Game, type GameParams, type MoveName } from "$lib/state/game.svelte";
+    import { Game, MOVE_DICT, type GameParams, type MoveName } from "$lib/state/game.svelte";
     import { T1_DIALOGUE, T1_GAME } from "$lib/levels/tutorial_1";
     import { onMount } from "svelte";
 
@@ -17,6 +17,7 @@
     import { T2_DIALOGUE, T2_GAME } from "$lib/levels/tutorial_2";
     import { T3_DIALOGUE, T3_GAME } from "$lib/levels/tutorial_3";
     import { goto } from "$app/navigation";
+    import MobileDeck from "$lib/components/mobileDeck.svelte";
 
 
     let tileSheet = $state<HTMLImageElement>();
@@ -129,11 +130,18 @@
     let showIntroModal = $derived<boolean>(true);
 
     const title = "bunniesin.love";
+    let innerWidth = $state(0);
+    let isMobile = $derived(innerWidth < 768);
+
+    function mobileMove(move: MoveName) {
+        const { x, y } = MOVE_DICT[move];
+        game.move(x, y);
+    }
 </script>
 
 <svelte:window onmousedown={() => { if (!interacted) { interacted = true; 
     renderDialogue = true;
-} }}/>
+} }} bind:innerWidth/>
 
 <div class="page">
 
@@ -224,6 +232,12 @@
             dialogue={currentDialogue}
             dialogueKey={currentDialogueKey}
             bind:finished
+        />
+    {/if}
+
+    {#if isMobile && game.status === "playing"}
+        <MobileDeck 
+            move={mobileMove}
         />
     {/if}
 </div>

@@ -270,6 +270,8 @@
         display: flex;
         flex-direction: column;
         gap: 8px;
+
+        z-index: 99;
     }
 
     .size {
@@ -295,6 +297,7 @@
         position: absolute;
         right: 0;
         padding: 8px;
+        z-index: 99;
     }
 
     
@@ -305,6 +308,12 @@
 
         display: flex;
         flex-direction: column;
+
+        --w: 65px;
+
+        @media screen and (max-width: 768px) {
+            --w: 45px;
+        }
     }
 
     :global(.swatch-wrapper) {
@@ -335,7 +344,7 @@
     }
 
     :global(.b-swatch) {
-        width: 65px; height: 65px;
+        width: var(--w); height: var(--w);
         position: relative;
 
         display: flex;
@@ -358,7 +367,7 @@
     }
 
     :global(.swatch) {
-        width: 65px; height: 65px;
+        width: var(--w); height: var(--w);
         position: relative;
 
         display: flex;
@@ -373,11 +382,18 @@
         & .icon {
             display: block;
             image-rendering: pixelated;
+            
+            @media screen and (max-width: 768px) {
+                width: 25px !important; height: 25px !important;
+                
+            }
         }
 
         &:hover {
             border-color: var(--carrot-orange);
         }
+
+        
     }
 
     .swatch-name {

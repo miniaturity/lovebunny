@@ -15,6 +15,7 @@
     import carrot_end from "$lib/assets/images/carrot-end.png";
     import Navlink from "$lib/components/navlink.svelte";
     import Winmodal from "$lib/components/winmodal.svelte";
+    import MobileDeck from "$lib/components/mobileDeck.svelte";
 
     let { data } = $props();
     const DAILY: GameParams = $derived([data.daily.board, data.daily.a, data.daily.b, data.daily.title, data.daily.day]);
@@ -89,6 +90,11 @@
         }
     }
 
+    function mobileMove(move: MoveName) {
+        const { x, y } = MOVE_DICT[move];
+        game.move(x, y);
+    }
+
     function playmove(move: MoveName) {
         const { x, y } = MOVE_DICT[move];
         playbackGame.move(x, y);
@@ -110,7 +116,12 @@
     const closeModal = () => { if (game.status === "menu") game.status = "playing"; }
 
     const title = "bunniesin.love";
+
+    let innerWidth = $state(0);
+    let isMobile = $derived(innerWidth < 768);
 </script>
+
+<svelte:window bind:innerWidth />
 
 <Modal bind:showModal={showIntroModal} bind:canShowModal onClose={closeModal}>
     <div class="modal-content">
@@ -118,6 +129,7 @@
         <header>
             welcome to bunniesin.love!
         </header>
+
         <p>
             {#each "reunite" as char, i} 
                 <span class="tchar" style={`
@@ -233,6 +245,12 @@
         </div>
     </div>
 
+
+    {#if isMobile && game.status === "playing"}
+        <MobileDeck 
+            move={mobileMove}
+        />
+    {/if}
 </div>
 
 <style lang="scss">
@@ -274,8 +292,6 @@
             image-rendering: pixelated;
         }
     }
-
-  
 
     .page {
         position: relative;
