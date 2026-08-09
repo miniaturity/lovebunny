@@ -83,9 +83,13 @@
     let totalPlayers = $state(0);
 
     async function loadDistribution() {
-        const result = await fetchScoreDistribution(today);
-        distribution = result.distribution;
-        totalPlayers = result.totalPlayers;
+        try {
+            const result = await fetchScoreDistribution(today);
+            distribution = result.distribution;
+            totalPlayers = result.totalPlayers;
+        } catch (err) {
+            console.error("Failed to load dist.: " + err);
+        }
     }
 
     async function replayLockedSolution(existingMoves: MoveName[]) {

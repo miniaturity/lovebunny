@@ -22,7 +22,7 @@ export async function fetchMyScore(date: string) {
 
 
 export async function fetchScoreDistribution(date: string) {
-    const res = await fetch(`/api/daily/scores?date=${date}`);
+    const res = await fetch(`/api/daily/scores?date=${date}`, { cache: 'no-store' });
     if (!res.ok) throw new Error('Failed to load score distribution');
-    return (await res.json()) as { date: string; totalPlayers: number; distribution: Record<string, number> };
+    return (await res.json()) as { date: string; distribution: Record<string, number>; totalPlayers: number };
 }

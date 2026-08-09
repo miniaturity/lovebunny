@@ -3,6 +3,7 @@ import type { RequestHandler } from './$types';
 import { normalizeLevelPayload } from '$lib/data/leveldata';
 import { emptyDistribution, calcTopPercent, type ScoreDistribution } from '$lib/data/scores';
 import { solveLevel } from '$lib/state/solver';
+import { getDailyScoreDistribution } from '$lib/server/scores';
 
 const MAX_MOVES = 1000; 
 const SCORE_QUOTA_TTL = 60 * 60 * 24 * 3; 
@@ -26,10 +27,7 @@ export const GET: RequestHandler = async ({ platform }) => {
 	if (!bucket) throw error(500, 'Level storage is not configured');
 
 	const date = new Date().toISOString().slice(0, 10);
-	const existing = await bucket.get(scoreKey(date));
-	const distribution: ScoreDistribution = existing
-		? await existing.json<ScoreDistribution>()
-		: emptyDistribution(-1, date);
+	const distribution = await getDailyScoreDistribution(bucket, date);
 
 	return json(distribution, { headers: { 'cache-control': 'public, max-age=60' } });
 };
