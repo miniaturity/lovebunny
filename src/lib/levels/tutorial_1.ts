@@ -17,7 +17,8 @@ export const T1_GAME: GameParams = [
     { x: 0, y: 0 }, 
     { x: 4, y: 4 },
     TITLE,
-    DAY
+    DAY,
+    "miniaturity"
 ]
 
 export const T1_DIALOGUE: DialogueTree = {

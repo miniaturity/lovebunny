@@ -1,8 +1,15 @@
 <script lang="ts">
     import type { Game, MoveName } from "$lib/state/game.svelte";
     import Button from "./button.svelte";
+    import Histograph from "./histograph.svelte";
 
-    let { game, playback }: { game: Game, playback: (moves: MoveName[]) => void } = $props();
+    let { game, playback, distribution, totalPlayers, isUserMade = false }: {
+        game: Game;
+        playback: (moves: MoveName[]) => void;
+        isUserMade?: boolean
+        distribution?: Record<string, number>;
+        totalPlayers?: number;
+    } = $props();
 
     export function getHex(min: number, max: number, value: number): string {
         const minR = 168, minG = 230, minB = 207;
@@ -24,59 +31,46 @@
 
         return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
     }
+
+    let percentile = $derived.by(() => {
+        if (!distribution || !totalPlayers) return null;
+        const yours = game.moves.length;
+        let atOrBelowYourMoveCount = 0;
+        for (const [movesStr, count] of Object.entries(distribution)) {
+            if (Number(movesStr) >= yours) atOrBelowYourMoveCount += count;
+        }
+        return Math.round((atOrBelowYourMoveCount / totalPlayers) * 100);
+    });
 </script>
 
+
+
 <div class="win-modal">
-    <header class="win-header">
-        <div>day {game.day} - {game.title}</div>
-    </header>
-    <div class="score-container" style={`--val: ${getHex(game.solution!.length, game.solution!.length + 10, game.moves.length)}`}>
-        <div class="sc-title">solved in</div>
-        <div class="score">{game.moves.length}</div>
-        <div class="percent">Top undefined%</div>
+    <div class="left">
+        <header>
+            your score
+        </header>
+
+        <div class="score">
+            {game.moves.length} moves
+        </div>
     </div>
-    <p style="white-space: pre-line;">
-        Optimal: {game.solution!.length}
-    </p>
-    <div class="wm-button-dock">
-        <Button onclick={() => { playback(game.solution!) }}>
-            Play Optimal
-        </Button>
+    
+    <div class="right">
+        {#if distribution}
+            <div class="graph">
+                <Histograph {distribution} optimal={game.solution?.length ?? 0} />
+            </div>
+        {/if}
     </div>
 </div>
 
 <style lang="scss">
     .win-modal {
         display: flex;
-        flex-direction: column;
+        flex-direction: row;
         align-items: center;
         min-width: 300px;
         --pad: 12px;
-    }
-
-    .win-header {
-        font-size: clamp(1.3rem, 1.5vw, 1.9rem);
-        padding: var(--pad);
-    }
-
-    .score-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        width: 100%;
-        background-color: var(--val);
-        padding: var(--pad);
-    }
-
-    .score {
-        font-size: clamp(1.8rem, 5vw, 5rem);
-    }
-
-    .wm-button-dock {
-        padding: var(--pad);
-    }
-
-    p {
-        padding: var(--pad);
     }
 </style>

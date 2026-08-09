@@ -16,16 +16,16 @@
     import Navlink from "$lib/components/navlink.svelte";
     import Winmodal from "$lib/components/winmodal.svelte";
     import MobileDeck from "$lib/components/mobileDeck.svelte";
+    import { fetchScoreDistribution, fetchMyScore, submitScore } from "$lib/api/scores";
 
     let { data } = $props();
-    const DAILY: GameParams = $derived([data.daily.board, data.daily.a, data.daily.b, data.daily.title, data.daily.day]);
-
+    const gameParams: GameParams = $derived([data.daily.board, data.daily.a, data.daily.b, data.daily.title, data.daily.day, data.daily.author]);
 
     let tileSheet = $state<HTMLImageElement>();
     let characterSheet = $state<HTMLImageElement>();
 
-    let game = $derived<Game>(new Game(...DAILY));
-    let playbackGame = $derived<Game>(new Game(...DAILY));
+    let game = $derived<Game>(new Game(...gameParams));
+    let playbackGame = $derived<Game>(new Game(...gameParams));
     let moves = $derived<MoveName[]>(game.moves);
 
     let isNewUser = $state<boolean>(false);
@@ -76,12 +76,61 @@
         };
     });
 
+    const today = new Date().toISOString().slice(0, 10);
+    let scoreSubmitted = $state(false);
+    let alreadyPlayedToday = $state(false); 
+    let distribution = $state<Record<string, number>>({});
+    let totalPlayers = $state(0);
+
+    async function loadDistribution() {
+        const result = await fetchScoreDistribution(today);
+        distribution = result.distribution;
+        totalPlayers = result.totalPlayers;
+    }
+
+    async function replayLockedSolution(existingMoves: MoveName[]) {
+        playbackGame = new Game(...gameParams);
+        playbackGame.status = "playback"; 
+
+        for (const move of existingMoves) {
+            await sleep(150);
+            playmove(move);
+        }
+
+        playbackGame.status = "won"; 
+        game.status = "won"; 
+    }
+
+    onMount(() => {
+
+        fetchMyScore(today).then(async (existing) => {
+            if (existing) {
+                alreadyPlayedToday = true;
+                scoreSubmitted = true; 
+                await replayLockedSolution(existing.moves);
+                loadDistribution();
+            }
+
+            game.moves = existing?.moves ?? [];
+        });
+
+    });
+
+    $effect(() => {
+        if (game.status === "won" && !scoreSubmitted) {
+            scoreSubmitted = true;
+            submitScore(today, game.moves).then((result) => {
+                if (result.ok) loadDistribution();
+            });
+        }
+    });
+
     const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
     
     async function playback(moves: MoveName[]) {
         if (game.status !== "won") return;
         game.status = "playback";
-        playbackGame = new Game(...DAILY);
+        playbackGame = new Game(...gameParams);
         playbackGame.status = "playback";
 
         for (let i = 0; i < moves.length; i++) {
@@ -107,8 +156,8 @@
     }
 
     function reset(playing: boolean = true) {
-        if (game.status === "won") return;
-        game = new Game(...DAILY);
+        if (alreadyPlayedToday || game.status === "won") return;
+        game = new Game(...gameParams);
         if (playing) game.status = "playing";
     }
 
@@ -161,7 +210,7 @@
 
 <Modal bind:showModal={showWinModal} bind:canShowModal>
     {#if game}
-        <Winmodal {game} {playback}/>
+        <Winmodal {game} {playback} {distribution} {totalPlayers} />
     {/if}
 </Modal>
 
@@ -219,10 +268,10 @@
 
     <div class="game" bind:this={gameEl}>
         {#if tileSheet && characterSheet}
-            <Board 
-                game={game.status === "playback" ? playbackGame : game}
-                {tileSheet}
-                {characterSheet}
+           <Board 
+                game={(game.status === "playback" || alreadyPlayedToday) ? playbackGame : game} 
+                {tileSheet} 
+                {characterSheet} 
             />
         {/if}
         <div class="game-info">
@@ -230,13 +279,10 @@
 
             <div class="button-dock">
                 <Button 
-                    onclick={reset}
-                    style="background-color: #c20202;"
-                    className="reset-btn"
-                    disabled={game.status !== "playing"}
-                >
-                    Reset
-                </Button>
+                    onclick={() => reset()} 
+                    style="background-color:#c20202;" className="reset-btn"
+                    disabled={alreadyPlayedToday || game.status !== "playing"}
+                >Reset</Button>
 
                 <Button onclick={() => { showWinModal = true; game.status = "won" }} disabled={game.status !== "won" && game.status !== "playback"}>
                     Stats

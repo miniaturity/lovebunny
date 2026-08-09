@@ -19,5 +19,6 @@ export const DEFAULT_GAME: GameParams = [
     { x: 0, y: 0 }, 
     { x: 7, y: 7 },
     TITLE,
-    DAY
+    DAY,
+    "anonymous"
 ]

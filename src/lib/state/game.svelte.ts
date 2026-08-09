@@ -29,7 +29,8 @@ export class Game {
         a: Position,
         b: Position,
         public readonly title: string,
-        public readonly day: number
+        public readonly day: number,
+        public readonly author: string
     ) {
         this.board = mapToBoard(initBoard);
 
@@ -78,7 +79,6 @@ export class Game {
             }
         }
     }
-
 
     public moveEntity(entity: Entity, dx: Move, dy: Move) {
         const nextX = entity.pos.x + dx;

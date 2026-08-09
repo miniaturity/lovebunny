@@ -27,5 +27,6 @@ export const DEMO_GAME: GameParams = [
     { x: 1, y: 1 }, 
     { x: 14, y: 14 },
     DEMO_TITLE,
-    DEMO_DAY
+    DEMO_DAY,
+    "demo"
 ]   

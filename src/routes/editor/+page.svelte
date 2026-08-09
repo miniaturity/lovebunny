@@ -21,6 +21,9 @@
     import { getTile } from "$lib/state/tiles";
     import Board from "$lib/components/board.svelte";
     import { Game, type EditorMode } from "$lib/state/game.svelte";
+    import { publishLevel } from "$lib/api/levels";
+    import Modal from "$lib/components/modal.svelte";
+
 
     let tileSheet = $state<HTMLImageElement>();
     let characterSheet = $state<HTMLImageElement>();
@@ -74,7 +77,7 @@
 
 
     let editorMode = $state<EditorMode>("edit");
-    let game = $derived<Game>(new Game(level.board, level.a, level.b, level.title, level.day));
+    let game = $derived<Game>(new Game(level.board, level.a, level.b, level.title, level.day, level.author));
     let tool = $state<Tool>(0);
     let importError = $state<string | null>(null);
 
@@ -100,9 +103,28 @@
         return () => clearTimeout(timer);
     });
 
+    let publishing = $state(false);
+    let publishResult = $state<string | null>(null);
+    let publishLink = $state<string | null>(null);
+
+    async function handlePublish() {
+        if (solveStatus.state !== "solvable") return;
+        publishing = true;
+        publishResult = null;
+        try {
+            const { id } = await publishLevel(level);
+            publishResult = `published! id: ${id}`;
+            publishLink = `https://bunniesin.love/levels/${id}`;
+        } catch (e) {
+            publishResult = e instanceof Error ? e.message : "failed to publish";
+        } finally {
+            publishing = false;
+        }
+    }
+
     function handleCell(x: number, y: number) {
         if (typeof tool === "number") {
-            if (level.board[y]?.[x] === tool || (positionIsOnBunny(x, y) && !getTile(tool).isPassable)) return;
+            if (level.board[y]?.[x] === tool || (positionIsOnBunny(x, y))) return;
             const nextBoard = cloneBoard(level.board);
             nextBoard[y][x] = tool;
             level.board = nextBoard;
@@ -156,11 +178,34 @@
         if (editorMode === "play") {
             game.status = "playing";
         } else if (editorMode === "edit" && game.status !== "menu") {
-            game = new Game(level.board, level.a, level.b, level.title, level.day);
+            game = new Game(level.board, level.a, level.b, level.title, level.day, level.author);
             game.status = "menu";
         }
-    })
+    });
+
+    let canShowModal = $state<boolean>(true);
+    let showLevelUploadModal = $state<boolean>(false);
+
+    $effect(() => {
+        if (publishResult) {
+            showLevelUploadModal = true;
+        }
+    });
 </script>
+
+<Modal bind:canShowModal bind:showModal={showLevelUploadModal}>
+    <div class="lu-modal-content">
+        <div class="result">
+            {publishResult}
+        </div>
+        
+        {#if publishLink}
+            <a class="link" href={publishLink}>
+                {publishLink}
+            </a>
+        {/if}
+    </div>
+</Modal>
 
 <div class="page">
 
@@ -224,12 +269,30 @@
             onImportFile={handleImportFile}
             bind:editorMode
             {game}
+            {level}
+            publishLevel={handlePublish}
         />
     {/if}
 
 </div>
 
 <style lang="scss">
+    .lu-modal-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 8px;
+
+        & .result {
+            font-size: 1.4rem;
+            padding: 8px;
+            background-color: var(--grass-green);
+            box-shadow: 2px 2px #000;
+            color: #fff;
+        }
+    }
     .nav {
         position: absolute;
         top: 0;

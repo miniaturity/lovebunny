@@ -4,9 +4,9 @@ import type { RequestHandler } from './$types';
 export const GET: RequestHandler = async ({ platform, params }) => {
     const bucket = platform?.env.lovebunny_levels;
     if (!bucket) throw error(500, 'Level storage is not configured');
-    if (!/^[a-f0-9-]{36}$/i.test(params.id)) throw error(400, 'Invalid level id');
+    if (!/^[a-f0-9-]{36}$/i.test(params.slug)) throw error(400, 'Invalid level id');
 
-    const obj = await bucket.get(`community/${params.id}.json`);
+    const obj = await bucket.get(`community/${params.slug}.json`);
     if (!obj) throw error(404, 'Level not found');
 
     return new Response(obj.body, {

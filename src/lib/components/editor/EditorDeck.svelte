@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { BRUSHES, MIN_BOARD_SIZE, MAX_BOARD_SIZE } from '$lib/data/leveldata';
+    import { BRUSHES, MIN_BOARD_SIZE, MAX_BOARD_SIZE, type LevelData } from '$lib/data/leveldata';
     import { Game, type EditorMode, type MoveName } from '$lib/state/game.svelte';
     import Button from '../button.svelte';
 
@@ -24,7 +24,9 @@
         onExport,
         onImportFile,
         editorMode = $bindable(),
-        game
+        game,
+        publishLevel,
+        level
     }: {
         title: string;
         day: number;
@@ -40,6 +42,8 @@
         onImportFile: (file: File) => void;
         editorMode: EditorMode;
         game: Game;
+        publishLevel: () => Promise<void>
+        level: LevelData;
     } = $props();
 
 
@@ -71,6 +75,7 @@
     }
 
     let statusHidden = $state<boolean>(true);
+
 </script>
 
 <section class="swatches-deck">
@@ -85,8 +90,8 @@
                     overrideStyles
                 >
                     <span class="icon" style={iconStyle(tileSheet, TILE_SHEET_SIZE, brush.sprite)}></span>
-                    
                 </Button>
+
                 <div class="swatch-name">
                     {brush.name}
                 </div>
@@ -95,16 +100,16 @@
 
         <div class="swatch-wrapper">
             <Button
-                    className={`${tool === "bunnyA" ? "b-swatch selected" : "b-swatch"}`}
-                    onclick={() => (tool = "bunnyA")}
-                    overrideStyles
-                >
-                    <span class="icon" style={iconStyle(characterSheet, CHAR_SHEET_SIZE, { x: 0, y: 0 })}></span>
-                    
-                </Button>
-                <div class="swatch-name">
-                    white bunny
-                </div>
+                className={`${tool === "bunnyA" ? "b-swatch selected" : "b-swatch"}`}
+                onclick={() => (tool = "bunnyA")}
+                overrideStyles
+            >
+                <span class="icon" style={iconStyle(characterSheet, CHAR_SHEET_SIZE, { x: 0, y: 0 })}></span>
+                
+            </Button>
+            <div class="swatch-name">
+                white bunny
+            </div>
         </div>
 
         <div class="swatch-wrapper">
@@ -181,9 +186,37 @@
         onchange={handleFileChange}
         hidden
     />
+    <div class="seperator">
+        /
+    </div>
+    <Button className="upload" onclick={publishLevel} style="background-color: #fff; color: #000">
+        upload
+    </Button>
+</section>
+
+<section class="meta-deck">
+    <input
+        type="text"
+        class="author-input"
+    >
+
+    <input
+        type="text"
+        class="author-input"
+    >
 </section>
 
 <style lang="scss">
+    .meta-deck {
+        display: flex;
+        flex-direction: row;
+        gap: 8px;
+
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        padding: 8px;
+    }
     .file-deck {
         display: flex;
         flex-direction: row;
@@ -199,7 +232,15 @@
         overflow: hidden;
     }
 
-
+    .seperator {
+        margin: 4px;
+        padding: 4px;
+        background-color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: "Halogen";
+    }
 
 
     .checking {
