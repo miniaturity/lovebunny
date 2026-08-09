@@ -7,11 +7,11 @@
         optimal: number;
     } = $props();
 
-    const COLUMN_COUNT = 10;
+    const COLUMN_COUNT = 15;
 
     // svelte-ignore state_referenced_locally
     // intended to capture only the initial state. derived is unneeded.
-    const OVERFLOW_FROM = optimal + 9;
+    const OVERFLOW_FROM = optimal + 14;
 
     interface Column {
         offset: number; 
@@ -39,10 +39,9 @@
         for (const [movesStr, count] of Object.entries(distribution)) {
             if (Number(movesStr) >= OVERFLOW_FROM) overflowCount += count;
         }
-        cols.push({ offset: 9, isOverflow: true, moveLabel: "9+", count: overflowCount });
+        cols.unshift({ offset: 9, isOverflow: true, moveLabel: "14+", count: overflowCount });
 
-        // rightmost = optimal, leftmost = overflow
-        return cols.reverse();
+        return cols;
     });
 
     let maxCount = $derived(Math.max(1, ...columns.map((c) => c.count)));
@@ -55,7 +54,7 @@
     const BAR_AREA_BOTTOM = 176;
     const BAR_AREA_HEIGHT = BAR_AREA_BOTTOM - BAR_AREA_TOP;
     const SLOT_WIDTH = CHART_WIDTH / COLUMN_COUNT;
-    const BAR_WIDTH = SLOT_WIDTH * 0.6;
+    const BAR_WIDTH = SLOT_WIDTH;
 
     function barHeight(count: number): number {
         if (maxCount === 0) return 0;
@@ -68,7 +67,7 @@
     }
 </script>
 
-<div class="histograph">
+<div class="histogram">
     {#if totalPlayers === 0}
         <p class="empty">no scores yet today</p>
     {:else}
@@ -79,8 +78,7 @@
             />
 
             {#each columns as col, i}
-                {@const slotX = i * SLOT_WIDTH}
-                {@const barX = slotX + (SLOT_WIDTH - BAR_WIDTH) / 2}
+                {@const slotX = i * SLOT_WIDTH} 
                 {@const h = Math.max(barHeight(col.count), col.count > 0 ? 3 : 0)}
                 {@const barY = BAR_AREA_BOTTOM - h}
 
@@ -94,7 +92,6 @@
                     onblur={() => (hovered = null)}
                     tabindex="0"
                 >
-                    <!-- full-height invisible hit area, so short/empty bars are still easy to hover -->
                     <rect
                         x={slotX} y={BAR_AREA_TOP}
                         width={SLOT_WIDTH} height={BAR_AREA_HEIGHT}
@@ -102,9 +99,8 @@
                     />
 
                     <rect
-                        x={barX} y={barY}
+                        x={slotX} y={barY}
                         width={BAR_WIDTH} height={h}
-                        rx="3"
                         class="bar"
                         class:optimal={!col.isOverflow && col.offset === 0}
                         class:overflow={col.isOverflow}
@@ -123,8 +119,17 @@
         <div class="tooltip-layer">
             {#each columns as col, i}
                 {#if hovered === i}
-                    {@const leftPercent = ((i + 0.5) / COLUMN_COUNT) * 100}
-                    <div class="tooltip" style={`left: ${leftPercent}%;`}>
+                    {@const slotX = i * SLOT_WIDTH}
+                    {@const h = Math.max(barHeight(col.count), col.count > 0 ? 3 : 0)}
+                    {@const barY = BAR_AREA_BOTTOM - h}
+                    
+                    {@const leftPct = ((slotX + BAR_WIDTH / 2) / CHART_WIDTH) * 100}
+                    {@const topPct = (barY / CHART_HEIGHT) * 100}
+                    
+                    <div 
+                        class="tooltip" 
+                        style="left: {leftPct}%; top: {topPct}%;"
+                    >
                         <strong>{col.count}</strong> player{col.count === 1 ? "" : "s"}
                         <span class="tooltip-sub">
                             {col.isOverflow ? `${optimal + 9}+ moves` : `${optimal + col.offset} move${col.offset === 0 && optimal === 1 ? "" : "s"}`}
@@ -140,12 +145,12 @@
 </div>
 
 <style lang="scss">
-    .histograph {
+    .histogram {
         position: relative;
         width: 100%;
         max-width: 420px;
         font-family: "Halogen", sans-serif;
-        color: #fff;
+        color: #000;
     }
 
     svg {
@@ -201,7 +206,7 @@
         position: absolute;
         top: 0;
         left: 0;
-        width: 100%;
+        width: 100%; height: 100%;
         pointer-events: none;
     }
 
@@ -209,14 +214,12 @@
         position: absolute;
         top: 0;
         transform: translate(-50%, -100%);
-        background: rgba(0, 0, 0, 0.8);
-        border: 1px solid var(--lpink, #fde0f4);
-        border-radius: 6px;
         padding: 6px 10px;
         font-size: 12px;
         white-space: nowrap;
         text-align: center;
         line-height: 1.3;
+        color: #000;
     }
 
     .tooltip-sub {

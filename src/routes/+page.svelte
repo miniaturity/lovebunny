@@ -95,6 +95,7 @@
     async function replayLockedSolution(existingMoves: MoveName[]) {
         playbackGame = new Game(...gameParams);
         playbackGame.status = "playback"; 
+        game.status = "playback";
 
         for (const move of existingMoves) {
             await sleep(150);
@@ -168,7 +169,7 @@
 
     const closeModal = () => { if (game.status === "menu") game.status = "playing"; }
 
-    const title = "bunniesin.love";
+    const title = "bunniesin.love_BETA";
 
     let innerWidth = $state(0);
     let isMobile = $derived(innerWidth < 768);

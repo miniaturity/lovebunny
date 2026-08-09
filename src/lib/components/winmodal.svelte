@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { Game, MoveName } from "$lib/state/game.svelte";
     import Button from "./button.svelte";
-    import Histograph from "./histograph.svelte";
+    import Histograph from "./histogram.svelte";
 
     let { game, playback, distribution, totalPlayers, isUserMade = false }: {
         game: Game;
@@ -72,5 +72,15 @@
         align-items: center;
         min-width: 300px;
         --pad: 12px;
+    }
+
+    .left {
+        display: flex;
+        flex-direction: column;
+
+    }
+
+    .right {
+        width: 300px;
     }
 </style>
