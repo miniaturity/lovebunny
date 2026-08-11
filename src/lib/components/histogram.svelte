@@ -1,10 +1,14 @@
 <script lang="ts">
+    import { onMount } from "svelte";
+
     let {
         distribution,
-        optimal
+        optimal,
+        playerScore
     }: {
         distribution: Record<string, number>;
         optimal: number;
+        playerScore: number;
     } = $props();
 
     const COLUMN_COUNT = 15;
@@ -44,6 +48,10 @@
         return cols;
     });
 
+    onMount(() => {
+        console.log("Player Col Exists?: " + playerScore);
+    })
+
     let maxCount = $derived(Math.max(1, ...columns.map((c) => c.count)));
 
     let hovered = $state<number | null>(null);
@@ -79,7 +87,7 @@
 
             {#each columns as col, i}
                 {@const slotX = i * SLOT_WIDTH} 
-                {@const h = Math.max(barHeight(col.count), col.count > 0 ? 3 : 0)}
+                {@const h = Math.max(barHeight(col.count), col.count > 0 ? 3 : 1)}
                 {@const barY = BAR_AREA_BOTTOM - h}
 
                 <g
@@ -118,21 +126,18 @@
 
         <div class="tooltip-layer">
             {#each columns as col, i}
-                {#if hovered === i}
+                {#if hovered === i || col.count === playerScore || (col.isOverflow && playerScore > OVERFLOW_FROM + optimal)}
                     {@const slotX = i * SLOT_WIDTH}
-                    {@const h = Math.max(barHeight(col.count), col.count > 0 ? 3 : 0)}
-                    {@const barY = BAR_AREA_BOTTOM - h}
                     
                     {@const leftPct = ((slotX + BAR_WIDTH / 2) / CHART_WIDTH) * 100}
-                    {@const topPct = (barY / CHART_HEIGHT) * 100}
                     
                     <div 
                         class="tooltip" 
-                        style="left: {leftPct}%; top: {topPct}%;"
+                        style="left: {leftPct}%; top: 0%;"
                     >
                         <strong>{col.count}</strong> player{col.count === 1 ? "" : "s"}
                         <span class="tooltip-sub">
-                            {col.isOverflow ? `${optimal + 9}+ moves` : `${optimal + col.offset} move${col.offset === 0 && optimal === 1 ? "" : "s"}`}
+                            {col.isOverflow ? `${optimal + 14}+ moves` : `${optimal + col.offset} move${col.offset === 0 && optimal === 1 ? "" : "s"}`}
                             &middot; {percentLabel(col.count)}
                         </span>
                     </div>
@@ -140,7 +145,7 @@
             {/each}
         </div>
 
-        <p class="caption">optimal solution: {optimal} move{optimal === 1 ? "" : "s"}</p>
+        <p class="caption">score distribution</p>
     {/if}
 </div>
 
@@ -174,16 +179,17 @@
     }
 
     .bar {
-        fill: var(--water-blue, #5fade4);
+        fill: var(--water-blue);
         transition: fill 0.15s ease, opacity 0.15s ease;
     }
 
     .bar.optimal {
-        fill: var(--carrot-orange, #f3802d);
+        fill: var(--carrot-orange024
+        );
     }
 
     .bar.overflow {
-        fill: rgba(255, 255, 255, 0.35);
+        fill: #c20202;
     }
 
     .bar.hovered {
@@ -192,7 +198,7 @@
 
     .axis-label {
         font-size: 10px;
-        fill: rgba(255, 255, 255, 0.7);
+        fill: rgb(0, 0, 0);
         text-anchor: middle;
         font-family: "Halogen", sans-serif;
     }
@@ -226,6 +232,7 @@
         display: block;
         font-size: 10px;
         opacity: 0.75;
+        color: #000;
     }
 
     .caption {

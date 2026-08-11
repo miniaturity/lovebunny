@@ -248,6 +248,7 @@
                     {game}
                     {tileSheet}
                     {characterSheet}
+                    loaded
                 />
             {/if}
         </div>

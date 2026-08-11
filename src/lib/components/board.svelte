@@ -7,11 +7,13 @@
     let { 
         game, 
         tileSheet, 
-        characterSheet 
+        characterSheet,
+        loaded
     }: { 
         game: Game; 
         tileSheet: HTMLImageElement; 
         characterSheet: HTMLImageElement; 
+        loaded: boolean;
     } = $props();
 
     let canvasRef: HTMLCanvasElement;
@@ -169,6 +171,7 @@
     }
 
     function keydown(e: KeyboardEvent) {
+        if (game.status === "playback" || game.status === "menu" || !loaded) return;
         const keyMap: Record<string, [Move, Move]> = {
             "ArrowUp": [0, -1],
             "ArrowLeft": [-1, 0],

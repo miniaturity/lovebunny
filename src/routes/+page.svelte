@@ -40,6 +40,8 @@
     let gameEl = $state<HTMLDivElement>();
     let tileDisplaySize = $state(TILE_SIZE);
 
+    let loaded = $state<boolean>(false);
+
     function updateTileDisplaySize() {
         if (!gameEl) return;
         const cols = game.board[0]?.length || 1;
@@ -112,8 +114,11 @@
             if (existing) {
                 alreadyPlayedToday = true;
                 scoreSubmitted = true; 
+                loaded = true;
                 await replayLockedSolution(existing.moves);
                 loadDistribution();
+            } else {
+                loaded = true;
             }
 
             game.moves = existing?.moves ?? [];
@@ -277,6 +282,7 @@
                 game={(game.status === "playback" || alreadyPlayedToday) ? playbackGame : game} 
                 {tileSheet} 
                 {characterSheet} 
+                {loaded}
             />
         {/if}
         <div class="game-info">

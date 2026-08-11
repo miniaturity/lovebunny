@@ -11,6 +11,8 @@
         totalPlayers?: number;
     } = $props();
 
+    let playerScore = $derived(game.moves.length);
+
     export function getHex(min: number, max: number, value: number): string {
         const minR = 168, minG = 230, minB = 207;
         const maxR = 255, maxG = 139, maxB = 148;
@@ -35,7 +37,7 @@
     let percentile = $derived.by(() => {
         if (!distribution || !totalPlayers) return null;
         const yours = game.moves.length;
-        let atOrBelowYourMoveCount = 0;
+        let atOrBelowYourMoveCount = -1; // includes your score
         for (const [movesStr, count] of Object.entries(distribution)) {
             if (Number(movesStr) >= yours) atOrBelowYourMoveCount += count;
         }
@@ -46,20 +48,26 @@
 
 
 <div class="win-modal">
-    <div class="left">
+    <div class="top">
         <header>
             your score
         </header>
 
         <div class="score">
-            {game.moves.length} moves
+            <span>{playerScore}</span> moves
         </div>
+        
+        {#if percentile}
+            <div class="percentile" style={`--p: ${percentile > 50 ? "#c20202" : "var(--grass-green)"};`}>
+                top {percentile}%
+            </div>
+        {/if}
     </div>
     
-    <div class="right">
+    <div class="bottom">
         {#if distribution}
             <div class="graph">
-                <Histograph {distribution} optimal={game.solution?.length ?? 0} />
+                <Histograph {distribution} optimal={game.solution?.length ?? 0} {playerScore} />
             </div>
         {/if}
     </div>
@@ -68,19 +76,41 @@
 <style lang="scss">
     .win-modal {
         display: flex;
-        flex-direction: row;
+        flex-direction: column;
         align-items: center;
         min-width: 300px;
         --pad: 12px;
     }
 
-    .left {
+    .top {
         display: flex;
-        flex-direction: column;
-
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        margin: 8px;
     }
 
-    .right {
-        width: 300px;
+    .bottom {
+        width: fit-content;
+        margin: 32px;
+        margin-top: 40px;
+    }
+
+    .score {
+        font-size: 0.8rem;
+        & span {
+            font-size: 3rem;
+        }
+    }
+
+    .percentile {
+        padding: 4px;
+        background-color: var(--p);
+        color: #fff;
+        box-shadow: 1px 1px #000;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 </style>
