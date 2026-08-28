@@ -174,7 +174,7 @@
 
     const closeModal = () => { if (game.status === "menu") game.status = "playing"; }
 
-    const title = "bunniesin.love_BETA";
+    const title = "bunniesin.love";
 
     let innerWidth = $state(0);
     let isMobile = $derived(innerWidth < 768);

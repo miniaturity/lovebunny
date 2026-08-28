@@ -3,10 +3,11 @@
     import Button from "./button.svelte";
     import Histograph from "./histogram.svelte";
 
-    let { game, playback, distribution, totalPlayers, isUserMade = false }: {
+    let { game, playback, distribution, totalPlayers, id, isUserMade = false }: {
         game: Game;
         playback: (moves: MoveName[]) => void;
-        isUserMade?: boolean
+        isUserMade?: boolean;
+        id?: string;
         distribution?: Record<string, number>;
         totalPlayers?: number;
     } = $props();
@@ -48,13 +49,13 @@
     async function copyResults(): Promise<void> {
         
         let text = 
-`day ${game.day} - "${game.title}" by ${game.author}
+`${!isUserMade ? `day ${game.day}` : `user level`} - "${game.title}" by ${game.author}
 
 ${"🥕".repeat(getCarrotCount())}
 
 earned ${getCarrotCount()}/5 carrots
-placed top ${percentile}% of ${totalPlayers} 🐇
-bunniesin.love  `;
+${!isUserMade ? `placed top ${percentile}% of ${totalPlayers} 🐇` : ``}
+bunniesin.love${isUserMade && `/levels/${id}`}  `;
 
         try {
             await navigator.clipboard.writeText(text);
@@ -88,24 +89,32 @@ bunniesin.love  `;
             solved in&nbsp;<span>{playerScore}</span>&nbsp;moves
         </div>
         
-        <div class="seperator">
-            &middot;
-        </div>
+        {#if !isUserMade}
+            <div class="seperator">
+                &middot;
+            </div>
 
-        {#if percentile !== null}
-            <div class="percentile" style={`--p: ${percentile > 50 ? "#c20202" : "var(--grass-green)"};`}>
-                top {percentile}%
-            </div>
+            {#if percentile !== null}
+                <div class="percentile" style={`--p: ${percentile > 50 ? "#c20202" : "var(--grass-green)"};`}>
+                    top {percentile}%
+                </div>
+            {/if}
         {/if}
     </div>
-    
-    <div class="bottom">
-        {#if distribution}
-            <div class="graph">
-                <Histograph {distribution} optimal={game.solution?.length ?? 0} {playerScore} />
-            </div>
-        {/if}
-    </div>
+
+    {#if !isUserMade}
+        <div class="bottom">
+            {#if distribution}
+                <div class="graph">
+                    <Histograph {distribution} optimal={game.solution?.length ?? 0} {playerScore} />
+                </div>
+            {/if}
+        </div>
+    {:else}
+        <div class="score">
+            optimal: {game.solution?.length ?? 0} moves
+        </div>
+    {/if}
 
     <div class="button-deck">
         <Button onclick={() => playback(game.solution!)}>

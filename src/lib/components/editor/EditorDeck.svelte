@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { BRUSHES, MIN_BOARD_SIZE, MAX_BOARD_SIZE, type LevelData } from '$lib/data/leveldata';
+    import { BRUSHES, type LevelData } from '$lib/data/leveldata';
     import { Game, type EditorMode, type MoveName } from '$lib/state/game.svelte';
     import Button from '../button.svelte';
 
@@ -12,6 +12,7 @@
 
     let {
         title = $bindable(),
+        author = $bindable(),
         day = $bindable(),
         rows,
         cols,
@@ -29,6 +30,7 @@
         level
     }: {
         title: string;
+        author: string;
         day: number;
         rows: number;
         cols: number;
@@ -42,7 +44,7 @@
         onImportFile: (file: File) => void;
         editorMode: EditorMode;
         game: Game;
-        publishLevel: () => Promise<void>
+        publishLevel: () => Promise<UploadStatus>
         level: LevelData;
     } = $props();
 
@@ -75,6 +77,16 @@
     }
 
     let statusHidden = $state<boolean>(true);
+    let uploadStatus = $state<UploadStatus>("upload");
+    
+    export type UploadStatus = "upload" | "uploading..." | "error";
+
+    async function handleUpload() {
+        uploadStatus = "uploading...";
+
+        const status = await publishLevel();
+        uploadStatus = status;
+    }
 
 </script>
 
@@ -189,21 +201,33 @@
     <div class="seperator">
         /
     </div>
-    <Button className="upload" onclick={publishLevel} style="background-color: #fff; color: #000">
-        upload
+    <Button disabled={game.solution === null} className="upload" onclick={handleUpload} style="background-color: #fff; color: #000">
+        {uploadStatus}
     </Button>
 </section>
 
 <section class="meta-deck">
-    <input
-        type="text"
-        class="author-input"
-    >
+    <label class="meta-field">
+        <span class="meta-label">level</span>
+        <input
+            type="text"
+            class="meta-input"
+            placeholder="level name"
+            maxlength="40"
+            bind:value={title}
+        >
+    </label>
 
-    <input
-        type="text"
-        class="author-input"
-    >
+    <label class="meta-field">
+        <span class="meta-label">by</span>
+        <input
+            type="text"
+            class="meta-input"
+            placeholder="author"
+            maxlength="40"
+            bind:value={author}
+        >
+    </label>
 </section>
 
 <style lang="scss">
@@ -216,6 +240,48 @@
         bottom: 0;
         left: 0;
         padding: 8px;
+        z-index: 99;
+    }
+
+    .meta-field {
+        display: flex;
+        flex-direction: row;
+        align-items: stretch;
+        box-shadow: 2px 2px #000;
+    }
+
+    .meta-label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 8px;
+        font-family: "Halogen";
+        font-size: clamp(1rem, 1.1vw, 1.3rem);
+        color: #fff;
+        background-color: var(--grass-green);
+    }
+
+    .meta-input {
+        width: 140px;
+        padding: 8px;
+        border: none;
+        outline: none;
+        font-family: "Halogen";
+        font-size: clamp(1rem, 1.1vw, 1.3rem);
+        color: #000;
+        background-color: #fff;
+
+        &::placeholder {
+            color: #969696;
+        }
+
+        &:focus {
+            background-color: #fef6d8;
+        }
+
+        @media screen and (max-width: 768px) {
+            width: 100px;
+        }
     }
     .file-deck {
         display: flex;

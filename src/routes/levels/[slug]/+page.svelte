@@ -37,6 +37,8 @@
     let gameEl = $state<HTMLDivElement>();
     let tileDisplaySize = $state(TILE_SIZE);
 
+    let loaded = $state<boolean>(true);
+
     function updateTileDisplaySize() {
         if (!gameEl) return;
         const cols = game.board[0]?.length || 1;
@@ -96,7 +98,7 @@
 
 <Modal bind:showModal={showWinModal} bind:canShowModal>
     {#if game}
-        <Winmodal {game} {playback} isUserMade />
+        <Winmodal {game} {playback} isUserMade id={data.id} />
     {/if}
 </Modal>
 
@@ -135,7 +137,7 @@
 
     <div class="game" bind:this={gameEl}>
         {#if tileSheet && characterSheet}
-            <Board game={game.status === "playback" ? playbackGame : game} {tileSheet} {characterSheet} />
+            <Board {loaded} game={game.status === "playback" ? playbackGame : game} {tileSheet} {characterSheet} />
         {/if}
         <div class="game-info">
             <div class="moves">moves: {movesLength}</div>

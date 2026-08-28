@@ -1,6 +1,6 @@
 <script lang="ts">
     import EditorBoard from "$lib/components/editorboard.svelte";
-    import EditorDeck, { type SolveStatus, type Tool } from "$lib/components/editor/EditorDeck.svelte";
+    import EditorDeck, { type SolveStatus, type Tool, type UploadStatus } from "$lib/components/editor/EditorDeck.svelte";
     import ts from "$lib/assets/sprites/spritesheet.png";
     import cs from "$lib/assets/sprites/charactersheet.png";
     import { onMount } from "svelte";
@@ -107,8 +107,8 @@
     let publishResult = $state<string | null>(null);
     let publishLink = $state<string | null>(null);
 
-    async function handlePublish() {
-        if (solveStatus.state !== "solvable") return;
+    async function handlePublish(): Promise<UploadStatus> {
+        if (solveStatus.state !== "solvable") return "error";
         publishing = true;
         publishResult = null;
         try {
@@ -117,8 +117,10 @@
             publishLink = `https://bunniesin.love/levels/${id}`;
         } catch (e) {
             publishResult = e instanceof Error ? e.message : "failed to publish";
+            return "error";
         } finally {
             publishing = false;
+            return "upload";
         }
     }
 
@@ -257,6 +259,7 @@
     {#if tileSheet && characterSheet}
         <EditorDeck
             bind:title={level.title}
+            bind:author={level.author}
             bind:day={level.day}
             {rows}
             {cols}

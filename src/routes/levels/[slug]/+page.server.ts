@@ -10,5 +10,5 @@ export const load: PageServerLoad = async ({ platform, params }) => {
     const obj = await bucket.get(`community/${params.slug}.json`);
     if (!obj) throw error(404, 'Level not found');
 
-    return { level: await obj.json() as LevelData };
+    return { level: await obj.json() as LevelData, id: params.slug };
 };
