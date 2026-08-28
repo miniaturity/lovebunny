@@ -11,6 +11,7 @@
         totalPlayers?: number;
     } = $props();
 
+    let shareStatus = $state<"success" | "fail" | null>(null);
     let playerScore = $derived(game.moves.length);
 
     export function getHex(min: number, max: number, value: number): string {
@@ -37,27 +38,61 @@
     let percentile = $derived.by(() => {
         if (!distribution || !totalPlayers) return null;
         const yours = game.moves.length;
-        let atOrBelowYourMoveCount = -1; // includes your score
+        let atOrBelowYourMoveCount = 0; // includes your score
         for (const [movesStr, count] of Object.entries(distribution)) {
             if (Number(movesStr) >= yours) atOrBelowYourMoveCount += count;
         }
         return Math.round((atOrBelowYourMoveCount / totalPlayers) * 100);
     });
+
+    async function copyResults(): Promise<void> {
+        
+        let text = 
+`day ${game.day} - "${game.title}" by ${game.author}
+
+${"🥕".repeat(getCarrotCount())}
+
+earned ${getCarrotCount()}/5 carrots
+placed top ${percentile}% of ${totalPlayers} 🐇
+bunniesin.love  `;
+
+        try {
+            await navigator.clipboard.writeText(text);
+        } catch (err) {
+            console.error("Failed to copy: " + err);
+        }
+    }
+
+    function getCarrotCount(): number {
+        if (!game.solution) return 0;
+
+        let carrotCount = 1;
+
+        const yourMoves = game.moves.length;
+        const solution = game.solution.length;
+
+        if (yourMoves <= solution + 10) carrotCount = 2;
+        if (yourMoves <= solution + 5) carrotCount = 3;
+        if (yourMoves <= solution + 2) carrotCount = 4;
+        if (yourMoves === solution) carrotCount = 5;
+        
+        return carrotCount;
+    }
 </script>
 
 
 
 <div class="win-modal">
     <div class="top">
-        <header>
-            your score
-        </header>
-
         <div class="score">
-            <span>{playerScore}</span> moves
+            solved in&nbsp;<span>{playerScore}</span>&nbsp;moves
         </div>
         
-        {#if percentile}
+        <div class="seperator">
+            &middot;
+        </div>
+
+        {#if percentile !== null}
             <div class="percentile" style={`--p: ${percentile > 50 ? "#c20202" : "var(--grass-green)"};`}>
                 top {percentile}%
             </div>
@@ -71,6 +106,25 @@
             </div>
         {/if}
     </div>
+
+    <div class="button-deck">
+        <Button onclick={() => playback(game.solution!)}>
+            Play Optimal
+        </Button>
+
+        <Button onclick={copyResults} style="display: flex; align-items: center; justify-content: center; width: 35px; background-color: var(--carrot-orange)">
+            <svg fill="#fff"  viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><path d="M378 324a69.78 69.78 0 0 0-48.83 19.91L202 272.41a69.7 69.7 0 0 0 0-32.82l127.13-71.5A69.76 69.76 0 1 0 308.87 129l-130.13 73.2a70 70 0 1 0 0 107.56L308.87 383A70 70 0 1 0 378 324"></path></svg>
+        </Button>
+    </div>
+
+    {#if shareStatus}
+        <div class={`share-status ${shareStatus}`}>
+            {shareStatus === "success" ?
+                "Copied to clipboard!" :
+                "Failed to copy."
+            }        
+        </div>
+    {/if}
 </div>
 
 <style lang="scss">
@@ -82,12 +136,26 @@
         --pad: 12px;
     }
 
+    .share-status {
+        margin: 8px;
+    }
+    
+    .button-deck {
+        display: flex;
+        flex-direction: row;
+        gap: 8px;
+        margin: 8px;
+    }
+
     .top {
         display: flex;
         flex-direction: row;
         align-items: center;
         justify-content: center;
         margin: 8px;
+        gap: 8px;
+
+        width: 100%;
     }
 
     .bottom {
@@ -97,9 +165,18 @@
     }
 
     .score {
-        font-size: 0.8rem;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
         & span {
-            font-size: 3rem;
+            font-size: 2.5rem;
+            background-color: var(--carrot-orange);
+            color: #fff;
+            padding: 2px 4px;   
+            box-shadow: 2px 2px #000;
+            animation: mov 2s steps(2) infinite;
         }
     }
 
@@ -112,5 +189,13 @@
         display: flex;
         align-items: center;
         justify-content: center;
+    }
+
+    @keyframes mov {
+        0% {
+            transform: rotateZ(4deg);
+        } 100% {
+            transform: rotateZ(-1deg);
+        }   
     }
 </style>

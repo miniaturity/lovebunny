@@ -147,7 +147,7 @@
         </Button>
     </div>
 </section>
-
+ 
 <section class="solve-indicator">
     <Button onclick={() => statusHidden = !statusHidden } style={`background-color: ${!statusHidden ? "var(--carrot-orange)" : "#c20202"};`}>
         {statusHidden ? "Show" : "Hide"}

@@ -22,6 +22,7 @@
         isOverflow: boolean;
         moveLabel: string; 
         count: number;
+        isPlayerColumn: boolean;
     }
 
     let totalPlayers = $derived(Object.values(distribution).reduce((sum, n) => sum + n, 0));
@@ -35,7 +36,8 @@
                 offset,
                 isOverflow: false,
                 moveLabel: offset === 0 ? "opt" : `+${offset}`,
-                count: distribution[String(moves)] ?? 0
+                count: distribution[String(moves)] ?? 0,
+                isPlayerColumn: moves === playerScore
             });
         }
 
@@ -43,7 +45,13 @@
         for (const [movesStr, count] of Object.entries(distribution)) {
             if (Number(movesStr) >= OVERFLOW_FROM) overflowCount += count;
         }
-        cols.unshift({ offset: 9, isOverflow: true, moveLabel: "14+", count: overflowCount });
+        cols.unshift({
+            offset: 9,
+            isOverflow: true,
+            moveLabel: "14+",
+            count: overflowCount,
+            isPlayerColumn: playerScore >= OVERFLOW_FROM
+        });
 
         return cols;
     });
@@ -112,7 +120,7 @@
                         class="bar"
                         class:optimal={!col.isOverflow && col.offset === 0}
                         class:overflow={col.isOverflow}
-                        class:hovered={hovered === i}
+                        class:hovered={hovered === i || col.isPlayerColumn}
                     />
 
                     <text
@@ -126,7 +134,7 @@
 
         <div class="tooltip-layer">
             {#each columns as col, i}
-                {#if hovered === i || col.count === playerScore || (col.isOverflow && playerScore > OVERFLOW_FROM + optimal)}
+                {#if hovered === i || (col.isPlayerColumn && !hovered)}
                     {@const slotX = i * SLOT_WIDTH}
                     
                     {@const leftPct = ((slotX + BAR_WIDTH / 2) / CHART_WIDTH) * 100}
