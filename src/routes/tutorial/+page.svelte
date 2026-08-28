@@ -201,6 +201,7 @@
     <div class="game" bind:this={gameEl}>
         {#if tileSheet && characterSheet}
             <Board 
+                loaded
                 {game}
                 {tileSheet}
                 {characterSheet}
