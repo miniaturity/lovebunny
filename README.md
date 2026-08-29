@@ -1,17 +1,30 @@
 <a name="top"></a>
 
 ![bunniesin.love](https://www.miniaturity.com/Screenshot%202026-08-28%20215254.png)
+
+<div align="center">
+
+![](https://img.shields.io/badge/bunnies_in-love-red) [![SvelteKit](https://img.shields.io/badge/SvelteKit-%23f1413d.svg?logo=svelte&logoColor=white)](#) 	[![Cloudflare Workers](https://img.shields.io/badge/Cloudflare%20Workers-FF4A03?logo=Cloudflare-Workers&logoColor=white)](#) [![Vite](https://img.shields.io/badge/Vite-646CFF?logo=vite&logoColor=fff)](#) [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=fff)](#)
+
+</div>
+
 ## bunniesin.love
 > https://bunniesin.love
 
-a puzzle game about two lover bunnies! their hearts are tethered together, but they're seperated.. reunite them to win!
 
-> made with svelte/ts/scss, hosted by cloudflare (pages, workers, R2 storage)
+a puzzle game about two lover bunnies! their hearts are tethered together, but they're seperated.. reunite them to win!
 
 ## 🐰 about
 bunniesin.love is a puzzle game.. about bunnies in love! centered around 2 seperated bunnies that need to be reunited. they use the same controls, but move opposite of each other. 
 
-inspired by https://enclose.horse 
+> _inspired by https://enclose.horse_
+
+shipped to hack club's **stardance**
+
+made with svelte/ts/scss and love _(not LÖVE)_ 
+
+hosted by cloudflare (pages, workers, R2 storage)
+
 
 ## 🥕 controls
 - Desktop: WASD/Arrow Keys
