@@ -1,18 +1,29 @@
+<a name="top"></a>
+
+![bunniesin.love](https://www.miniaturity.com/Screenshot%202026-08-28%20215254.png)
 ## bunniesin.love
 > https://bunniesin.love
 
-a puzzle game about two lover bunnies!
+a puzzle game about two lover bunnies! their hearts are tethered together, but they're seperated.. reunite them to win!
 
-their hearts are tethered together, but they're seperated.. bring them back together!
+> made with svelte/ts/scss, hosted by cloudflare (pages, workers, R2 storage)
 
-> made with svelte/ts/scss, hosted by cloudflare (pages, R2 storage)
+## 🐰 about
+bunniesin.love is a puzzle game.. about bunnies in love! centered around 2 seperated bunnies that need to be reunited. they use the same controls, but move opposite of each other. 
 
-## features
-- ~~daily puzzles!~~ (disabled in beta, currently defaults to the same puzzle)
+inspired by https://enclose.horse 
+
+## 🥕 controls
+- Desktop: WASD/Arrow Keys
+- Mobile: Arrow Keys (on-screen buttons)
+
+## 🐇 features
+- daily puzzles
 - full tutorial
-- level editor (with import/export)
+- level editor (with import/export and user uploading)
 - mobile compatability
-- ~~score distribution~~ (disabled in beta)
+- solving algorithm
+- score distribution
 - two bunnies
 
 ## contributing
