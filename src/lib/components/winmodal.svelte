@@ -39,23 +39,37 @@
     let percentile = $derived.by(() => {
         if (!distribution || !totalPlayers) return null;
         const yours = game.moves.length;
-        let atOrBelowYourMoveCount = 0; // includes your score
-        for (const [movesStr, count] of Object.entries(distribution)) {
+
+        let atOrBelowYourMoveCount = 0;
+        let atOrWorseCount = 0;
+         for (const [movesStr, count] of Object.entries(distribution)) {
             if (Number(movesStr) >= yours) atOrBelowYourMoveCount += count;
+            if (Number(movesStr) >= yours) atOrWorseCount += count;
         }
-        return Math.round((atOrBelowYourMoveCount / totalPlayers) * 100);
-    });
+
+        const percentAtOrWorse = (atOrWorseCount / totalPlayers) * 100;
+
+        if (percentAtOrWorse >= 50) {
+            const percent = Math.max(1, Math.round(100 - percentAtOrWorse));
+           return { direction: "top" as const, percent };
+        } else {
+           const percent = Math.max(1, Math.round(percentAtOrWorse));
+            return { direction: "bottom" as const, percent };
+        }
+
+     });
 
     async function copyResults(): Promise<void> {
-        
+        if (!game.solution) return;
+
         let text = 
 `${!isUserMade ? `day ${game.day}` : `user level`} - "${game.title}" by ${game.author}
 
 ${"🥕".repeat(getCarrotCount())}
-
+${game.moves.length === game.solution.length ? `\n🐰 PERFECT game!\n` : ""}
 earned ${getCarrotCount()}/5 carrots
-${!isUserMade ? `placed top ${percentile}% of ${totalPlayers} 🐇` : ``}
-bunniesin.love${isUserMade && `/levels/${id}`}  `;
+${!isUserMade && percentile ? `placed ${percentile.direction === "top" ? "top" : "bottom"} ${percentile.percent}% of ${totalPlayers} 🐇` : ``}
+bunniesin.love${isUserMade ? `/levels/${id}` : ``}  `;
 
         try {
             await navigator.clipboard.writeText(text);
@@ -95,8 +109,8 @@ bunniesin.love${isUserMade && `/levels/${id}`}  `;
             </div>
 
             {#if percentile !== null}
-                <div class="percentile" style={`--p: ${percentile > 50 ? "#c20202" : "var(--grass-green)"};`}>
-                    top {percentile}%
+                <div class="percentile" style={`--p: ${percentile.direction === "top" ? "var(--grass-green)" : "#c20202"}`}>
+                    {percentile.direction === "top" ? "Top" : "Bottom"} {percentile.percent}%
                 </div>
             {/if}
         {/if}

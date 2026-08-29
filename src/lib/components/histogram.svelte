@@ -192,8 +192,7 @@
     }
 
     .bar.optimal {
-        fill: var(--carrot-orange024
-        );
+        fill: var(--carrot-orange);
     }
 
     .bar.overflow {

@@ -27,11 +27,15 @@
     let game = $derived<Game>(new Game(...gameParams));
     let playbackGame = $derived<Game>(new Game(...gameParams));
     let moves = $derived<MoveName[]>(game.moves);
+    let bestGame = $derived<Game>(new Game(...gameParams));
 
     let isNewUser = $state<boolean>(false);
+    let scoreSubmitted = $state(false);
     let canShowModal = $state<boolean>(true);
     let showIntroModal = $derived<boolean>(isNewUser);
-    let showWinModal = $derived<boolean>(game.status === "won");
+    let showWinModal = $derived<boolean>(game.status === "won" && scoreSubmitted);
+    let showConfirmModal = $derived<boolean>(game.status === "won" && !scoreSubmitted);
+    let confirmedSubmission = $state<boolean>(false);
 
     const TILE_SIZE = 16;
 
@@ -79,7 +83,6 @@
     });
 
     const today = new Date().toISOString().slice(0, 10);
-    let scoreSubmitted = $state(false);
     let alreadyPlayedToday = $state(false); 
     let distribution = $state<Record<string, number>>({});
     let totalPlayers = $state(0);
@@ -127,13 +130,15 @@
     });
 
     $effect(() => {
-        if (game.status === "won" && !scoreSubmitted) {
+        if (game.status === "won" && !scoreSubmitted && confirmedSubmission) {
             scoreSubmitted = true;
             submitScore(today, game.moves).then((result) => {
                 if (result.ok) loadDistribution();
             });
         }
     });
+
+
 
     const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
     
@@ -166,11 +171,37 @@
     }
 
     function reset(playing: boolean = true) {
-        if (alreadyPlayedToday || game.status === "won") return;
+        if (alreadyPlayedToday || (game.status === "won" && scoreSubmitted)) return;
+        
+        if (game.status === "won" && (bestGame.moves.length === 0 || bestGame.moves.length > game.moves.length)) {
+            bestGame.moves = [...game.moves];
+            bestGame.a = { ...game.a };
+            bestGame.b = { ...game.b };
+            
+        }
+
         game = new Game(...gameParams);
         if (playing) game.status = "playing";
     }
 
+    function setToBest() {
+        if (bestGame.moves.length === 0) return;
+
+        game.moves = [...bestGame.moves.slice(0, -1)];
+        game.a = { ...bestGame.a };
+        game.b = { ...bestGame.b };
+        
+        let n = bestGame.moves.length;
+        game.move(MOVE_DICT[bestGame.moves[n-1]].x, MOVE_DICT[bestGame.moves[n-1]].y)
+        
+        game.status = "won";
+        
+        
+    }
+
+    function confirmSubmission() {
+        confirmedSubmission = true;
+    }
 
     const closeModal = () => { if (game.status === "menu") game.status = "playing"; }
 
@@ -181,6 +212,29 @@
 </script>
 
 <svelte:window bind:innerWidth />
+
+<Modal bind:showModal={showConfirmModal} bind:canShowModal onClose={closeModal} canClose={false}>
+    <div class="modal-content">
+        <img src={love} alt=""/>
+        <header style="display: flex; flex-direction: row;">
+            confirm submission
+        </header>
+
+        <p>
+            are you sure you want to submit this solution? 
+        </p>
+
+        <div class="buttons">
+            <Button onclick={reset} style="background-color: #c20202;">
+                Reset
+            </Button>
+
+            <Button onclick={confirmSubmission}>
+                Confirm
+            </Button>
+        </div>
+    </div>
+</Modal>
 
 <Modal bind:showModal={showIntroModal} bind:canShowModal onClose={closeModal}>
     <div class="modal-content">
@@ -286,7 +340,12 @@
             />
         {/if}
         <div class="game-info">
-            <div class="moves">moves: {moves.length}</div>
+            <div class="moves">
+                moves: {moves.length}
+                {#if bestGame.moves.length !== 0} 
+                    <button class="best" onclick={setToBest}>best: {bestGame.moves.length} {"<"}</button>
+                {/if}
+            </div>
 
             <div class="button-dock">
                 <Button 
@@ -457,6 +516,19 @@
         display: inline-block;
         animation: letterfloat 3s ease-in-out infinite;
         animation-delay: calc(0.2s * var(--index));
+    }
+
+    .best {
+        border: none;
+        background: transparent;
+        font-family: "Halogen";
+        color: #fff;
+        opacity: 0.8;
+        cursor: pointer;
+
+        &:hover {
+            opacity: 1;
+        }
     }
 
     @keyframes letterfloat_title {
