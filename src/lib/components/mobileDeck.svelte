@@ -39,6 +39,7 @@
         gap: 8px;
         font-family: "Halogen";
         padding: 12px;
+        
     }
 
     .above {
@@ -58,9 +59,9 @@
         aspect-ratio: 1 / 1;
         display: flex;
         align-items: center; justify-content: center;
-        width: 30px;
+        width: 40px;
         border: none;
-        font-size: clamp(1.2rem, 2vw, 1.8rem);
+        font-size: clamp(1.4rem, 3vw, 2rem);
         box-shadow: 2px 2px #000;
     }
      

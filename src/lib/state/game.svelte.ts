@@ -23,6 +23,8 @@ export class Game {
     public status = $state<GameStatus>('menu');
     public moves = $state<MoveName[]>([]);
     public solution = $state<MoveName[] | null>(null);
+    public lastMove = $state<MoveName>();
+    public undone = $state<boolean>(false);
 
     constructor(
         initBoard: number[][],
@@ -43,9 +45,11 @@ export class Game {
         }
     }
 
-    move(dx: Move, dy: Move) {
+    public move(dx: Move, dy: Move) {
         if ((this.status !== 'playing' && this.status !== "playback") || !this.solution) return;
 
+
+        this.undone = false;
         const direction = this.getDirection(dx, dy);
 
         if (direction) {
@@ -60,7 +64,8 @@ export class Game {
 
         // if they let me use objects as a key it would be cool and i wouldnt have to do this 
         // WARNING: BS AHEAD
-        this.moves.push(((Object.keys(MOVE_DICT) as Array<keyof typeof MOVE_DICT>).find((key) => MOVE_DICT[key].x === dx && MOVE_DICT[key].y === dy))!)
+        const move: MoveName =((Object.keys(MOVE_DICT) as Array<keyof typeof MOVE_DICT>).find((key) => MOVE_DICT[key].x === dx && MOVE_DICT[key].y === dy))!;
+        this.moves.push(move);
         this.triggerGlobalOnMove();
         
         const CARDINAL: Position[] = [
@@ -78,7 +83,40 @@ export class Game {
                 this.status = "won";
             }
         }
+
+        this.lastMove = move;
     }
+
+    public undo() {
+        if (this.undone || !this.lastMove || this.status !== "playing") return;
+
+        switch (this.lastMove) {
+            case "up":
+                this.moveEntity(this.a, MOVE_DICT["down"].x, MOVE_DICT["down"].y);
+                this.moveEntity(this.b, -MOVE_DICT["down"].x as Move, -MOVE_DICT["down"].y as Move);
+                break;
+            case "down":
+                this.moveEntity(this.a, MOVE_DICT["up"].x, MOVE_DICT["up"].y);
+                this.moveEntity(this.b, -MOVE_DICT["up"].x as Move, -MOVE_DICT["up"].y as Move);
+                break;
+            case "left":
+                this.moveEntity(this.a, MOVE_DICT["right"].x, MOVE_DICT["right"].y);
+                this.moveEntity(this.b, -MOVE_DICT["right"].x as Move, -MOVE_DICT["right"].y as Move);
+                break;
+            case "right":
+                this.moveEntity(this.a, MOVE_DICT["left"].x, MOVE_DICT["left"].y);
+                this.moveEntity(this.b, -MOVE_DICT["left"].x as Move, -MOVE_DICT["left"].y as Move);
+                break;
+            default:
+                break;
+        }
+
+        this.moves.pop();
+        this.triggerGlobalOnMove();
+        this.undone = true;
+    }
+
+
 
     public moveEntity(entity: Entity, dx: Move, dy: Move) {
         const nextX = entity.pos.x + dx;

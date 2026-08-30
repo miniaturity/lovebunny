@@ -135,6 +135,10 @@
     }
 </script>
 
+<svelte:head>
+    <title>tutorial</title>
+</svelte:head>
+
 <svelte:window onmousedown={() => { if (!interacted) { interacted = true; 
     renderDialogue = true;
 } }} bind:innerWidth/>

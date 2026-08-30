@@ -195,6 +195,10 @@
     });
 </script>
 
+<svelte:head>
+    <title>editor</title>
+</svelte:head>
+
 <Modal bind:canShowModal bind:showModal={showLevelUploadModal}>
     <div class="lu-modal-content">
         <div class="result">

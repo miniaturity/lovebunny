@@ -96,6 +96,10 @@
     const pageTitle = "bunniesin.love";
 </script>
 
+<svelte:head>
+    <title>level - {data.id}</title>
+</svelte:head>
+
 <Modal bind:showModal={showWinModal} bind:canShowModal>
     {#if game}
         <Winmodal {game} {playback} isUserMade id={data.id} />
@@ -142,8 +146,27 @@
         <div class="game-info">
             <div class="moves">moves: {movesLength}</div>
             <div class="button-dock">
-                <Button onclick={() => reset()} style="background-color: #c20202;" className="reset-btn" disabled={game.status !== "playing"}>Reset</Button>
-                <Button onclick={() => { showWinModal = true; game.status = "won"; }} disabled={game.status !== "won" && game.status !== "playback"}>Stats</Button>
+                <Button
+                    onclick={() => game.undo()}
+                    style="background-color: var(--carrot-orange);"
+                    disabled={game.undone || !game.lastMove || game.status !== "playing"}
+                >
+                    ↩
+                </Button>
+                <Button 
+                    onclick={() => reset()} 
+                    style="background-color: #c20202;" 
+                    className="reset-btn" 
+                    disabled={game.status !== "playing"}
+                >
+                    Reset
+                </Button>
+                <Button 
+                    onclick={() => { showWinModal = true; game.status = "won"; }} 
+                    disabled={game.status !== "won" && game.status !== "playback"}
+                    >
+                        Stats
+                </Button>
             </div>
         </div>
     </div>
