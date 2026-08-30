@@ -29,6 +29,7 @@
         --grass-green: #257d31;
         --water-blue: #5fade4;
         --lpink: #fde0f4;
+        --reset-red: #c20202;
     }
 
     @font-face {

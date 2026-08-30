@@ -5,7 +5,7 @@
     import { Game, MOVE_DICT, type GameParams, type MoveName } from "$lib/state/game.svelte";
     import { DEMO_GAME } from "$lib/demo";
     import { onMount } from "svelte";
-    import { hasVisited } from "$lib/state/store";
+    import { hasVisited, hasCompletedTip } from "$lib/state/store";
     import Modal from "$lib/components/modal.svelte";
 
     import love from "$lib/assets/images/love.png";
@@ -17,6 +17,7 @@
     import Winmodal from "$lib/components/winmodal.svelte";
     import MobileDeck from "$lib/components/mobileDeck.svelte";
     import { fetchScoreDistribution, fetchMyScore, submitScore } from "$lib/api/scores";
+    import Dialogue, { type DialogueTree } from "$lib/components/dialogue.svelte";
 
     let { data } = $props();
     const gameParams: GameParams = $derived([data.daily.board, data.daily.a, data.daily.b, data.daily.title, data.daily.day, data.daily.author]);
@@ -45,6 +46,7 @@
     let tileDisplaySize = $state(TILE_SIZE);
 
     let loaded = $state<boolean>(false);
+    let hasSeenTips = $state<boolean>(true);
 
     function updateTileDisplaySize() {
         if (!gameEl) return;
@@ -65,6 +67,13 @@
         } else {
             game.status = "playing";
         }
+
+        if (!$hasCompletedTip) {
+            hasSeenTips = false;
+            $hasCompletedTip = true;
+        }
+        
+
 
         waveTiles = Array.from({ length: WAVE_COUNT }, () => ({
             top: Math.random() * 100,
@@ -209,6 +218,39 @@
 
     let innerWidth = $state(0);
     let isMobile = $derived(innerWidth < 768);
+    
+    let menuMode = $state<boolean>(false);
+    let focusedMenu = $state<boolean>(false);
+    let finished = $state<boolean>(false);
+    let renderDialogue = $state<boolean>(false);
+
+    const TIP_DIALOGUE: DialogueTree = {
+        tip: {
+            id: "tip",
+            expression: "happy.png",
+            name: "mini",
+            text: "view the editor and tutorial from this menu!"
+        }
+    }
+
+    $effect(() => {
+        if (!showIntroModal && !hasSeenTips) {
+            menuMode = true;
+
+            setTimeout(() => {
+                focusedMenu = true;
+                renderDialogue = true;
+            }, 500);
+            
+        }
+    });
+
+    $effect(() => {
+        if (!renderDialogue && focusedMenu) {
+            focusedMenu = false;
+            setTimeout(() => menuMode = false, 1000);
+        }
+    })
 </script>
 
 <svelte:window bind:innerWidth />
@@ -278,7 +320,7 @@
     {/if}
 </Modal>
 
-<div class="page">
+<div class={`page${menuMode ? " menu-mode" : ""}`}>
 
     <div class="wave-background" aria-hidden="true">
         {#each waveTiles as tile}
@@ -327,6 +369,10 @@
                     <img alt="" src={carrot_end}/>
                 </div>
             </div>
+
+            <div class="author">
+                level by {game.author}
+            </div>
         {/if}
     </header>
 
@@ -350,7 +396,7 @@
             <div class="button-dock">
                 <Button 
                     onclick={() => reset()} 
-                    style="background-color:#c20202;" className="reset-btn"
+                    style="background-color: var(--reset-red);" className="reset-btn"
                     disabled={alreadyPlayedToday || game.status !== "playing"}
                 >Reset</Button>
 
@@ -367,7 +413,24 @@
             move={mobileMove}
         />
     {/if}
+
 </div>
+
+{#if menuMode}
+    <div class={`focus-container${focusedMenu ? " focused" : ""}`}>
+
+    </div>
+{/if}
+
+{#if renderDialogue}
+    <Dialogue
+        bind:renderDialogue
+        dialogue={TIP_DIALOGUE}
+        dialogueKey={"tip"}
+        bind:finished
+        audioEnabled={false}
+    />
+{/if}
 
 <style lang="scss">
     :global(body) {
@@ -380,6 +443,8 @@
         left: 0;
         padding: 8px;
     }
+
+
 
     .modal-content {
         --p: 12px;
@@ -418,6 +483,25 @@
         justify-content: center; 
         background-color: var(--water-blue);
         overflow-x: hidden;
+    }
+
+    .menu-mode {
+        filter: brightness(0.5);
+    }
+
+    .focus-container {
+        position: absolute;
+        top: 0; left: 0;
+        z-index: 55;
+        backdrop-filter: brightness(2);
+        width: 100vw; height: 100vh;
+    
+        transition: all 0.5s ease-in-out;
+    }
+
+    .focused {
+        width: 65px !important; 
+        height: 115px !important;
     }
 
     .wave-background {
@@ -498,6 +582,10 @@
                 padding: 8px;
             }
         }
+    }
+
+    .author {
+        color: #ffffff6d;
     }
 
     .button-dock {

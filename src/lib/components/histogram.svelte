@@ -84,9 +84,7 @@
 </script>
 
 <div class="histogram">
-    {#if totalPlayers === 0}
-        <p class="empty">no scores yet today</p>
-    {:else}
+  
         <svg viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`} role="img" aria-label="distribution of moves taken to solve today's puzzle">
             <line
                 x1="0" y1={BAR_AREA_BOTTOM} x2={CHART_WIDTH} y2={BAR_AREA_BOTTOM}
@@ -154,7 +152,6 @@
         </div>
 
         <p class="caption">score distribution</p>
-    {/if}
 </div>
 
 <style lang="scss">
@@ -188,7 +185,11 @@
 
     .bar {
         fill: var(--water-blue);
-        transition: fill 0.15s ease, opacity 0.15s ease;
+        transition:
+            height 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+            y 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+            fill 0.15s ease,
+            opacity 0.15s ease;
     }
 
     .bar.optimal {

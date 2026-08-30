@@ -50,7 +50,7 @@
         const percentAtOrWorse = (atOrWorseCount / totalPlayers) * 100;
 
         if (percentAtOrWorse >= 50) {
-            const percent = Math.max(1, Math.round(100 - percentAtOrWorse));
+            const percent = Math.max(0, Math.round(100 - percentAtOrWorse));
            return { direction: "top" as const, percent };
         } else {
            const percent = Math.max(1, Math.round(percentAtOrWorse));
@@ -73,6 +73,7 @@ bunniesin.love${isUserMade ? `/levels/${id}` : ``}  `;
 
         try {
             await navigator.clipboard.writeText(text);
+            alert("Copied message to clipboard!");
         } catch (err) {
             console.error("Failed to copy: " + err);
         }
@@ -110,7 +111,7 @@ bunniesin.love${isUserMade ? `/levels/${id}` : ``}  `;
 
             {#if percentile !== null}
                 <div class="percentile" style={`--p: ${percentile.direction === "top" ? "var(--grass-green)" : "#c20202"}`}>
-                    {percentile.direction === "top" ? "Top" : "Bottom"} {percentile.percent}%
+                    {percentile.direction === "top" ? "Top" : "Bottom"} {percentile.percent === 0 ? "<1" : percentile.percent}%
                 </div>
             {/if}
         {/if}

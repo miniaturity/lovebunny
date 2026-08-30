@@ -68,8 +68,8 @@
     }
 
     .nl-children {
-        width: 2em; 
-        height: 2em;
+        width: 50px; 
+        height: 50px;
         display: flex;
         align-items: center;
         justify-content: center;

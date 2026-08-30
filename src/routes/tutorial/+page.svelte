@@ -124,10 +124,6 @@
     let currentDialogue = $derived<DialogueTree>(TUTORIAL_LEVELS[levelIndex].dialogue);
     let currentDialogueKey = $state<string>("start");
     let finished = $state<boolean>(false);
-    
-
-    let canShowModal = $state<boolean>(true);
-    let showIntroModal = $derived<boolean>(true);
 
     const title = "bunniesin.love";
     let innerWidth = $state(0);

@@ -57,6 +57,26 @@ export const T3_DIALOGUE: DialogueTree = {
                 continue: true
             }
         ],
-        name: "mini"
+        name: "mini",
+        next: "editor"
+    },
+
+    editor: {
+        id: "editor",
+        name: "mini",
+        expression: "neutral.png",
+        text: "P.S. there is a level editor! make and share your custom-made levels! click the top-left wrench icon.",
+        pausePoints: [
+            {
+                index: 29,
+                ms: 500,
+                expression: "happy.png"
+            },
+            {
+                index: 69,
+                ms: 500,
+                expression: "neutral.png"
+            }
+        ]
     }
 }

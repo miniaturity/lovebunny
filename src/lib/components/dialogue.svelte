@@ -33,12 +33,14 @@
         renderDialogue = $bindable(),
         dialogue,
         dialogueKey,
-        finished = $bindable()
+        finished = $bindable(),
+        audioEnabled = true
     }: {
         renderDialogue: boolean;
         dialogue: DialogueTree;
         dialogueKey: string;
         finished: boolean;
+        audioEnabled?: boolean;
     } = $props();
 
     const sfx_TEXT = preloadAudio(text_sfx_file);
@@ -82,7 +84,7 @@
         const pause = pausePoints?.find(p => p.index === index);
         const delay = (pause ? pause?.ms || 250 : SPEED_MS);
 
-        if (index % 3 === 0 && sfx_TEXT) {
+        if (index % 3 === 0 && sfx_TEXT && audioEnabled) {
             sfx_TEXT.volume = 1;
             sfx_TEXT.currentTime = 0;
             sfx_TEXT.playbackRate = Math.random() * (1.8 - 0.99) + 0.9;
