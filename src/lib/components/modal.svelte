@@ -21,6 +21,7 @@
 
         onClose?.();
     }
+
 </script>
 
 {#if showModal}

@@ -27,7 +27,7 @@
         editorMode = $bindable(),
         game,
         publishLevel,
-        level
+        onClear,
     }: {
         title: string;
         author: string;
@@ -44,8 +44,8 @@
         onImportFile: (file: File) => void;
         editorMode: EditorMode;
         game: Game;
-        publishLevel: () => Promise<UploadStatus>
-        level: LevelData;
+        publishLevel: () => void;
+        onClear: () => void;
     } = $props();
 
 
@@ -81,12 +81,6 @@
     
     export type UploadStatus = "upload" | "uploading..." | "error";
 
-    async function handleUpload() {
-        uploadStatus = "uploading...";
-
-        const status = await publishLevel();
-        uploadStatus = status;
-    }
 
 </script>
 
@@ -161,7 +155,7 @@
 </section>
  
 <section class="solve-indicator">
-    <Button onclick={() => statusHidden = !statusHidden } style={`background-color: ${!statusHidden ? "var(--carrot-orange)" : "#c20202"};`}>
+    <Button onclick={() => statusHidden = !statusHidden } style={`background-color: var(--carrot-orange);`}>
         {statusHidden ? "Show" : "Hide"}
     </Button>
 
@@ -176,6 +170,15 @@
     <Button disabled={solveStatus.state === "unsolvable" || solveStatus.state === "checking"} style={`background-color: ${editorMode === "play" ? "var(--carrot-orange)" : "var(--grass-green)"}`} onclick={() => editorMode = editorMode === "edit" ? "play" : "edit"}>
         {editorMode === "edit" ? "Play" : "Edit"}
     </Button>
+
+    {#if editorMode === "edit"}
+        <Button
+            onclick={onClear}
+            style="background-color: var(--reset-red)"
+        >
+            Clear
+        </Button>
+    {/if}
     
     {#if editorMode === "play"}
         <div class="moves">
@@ -201,7 +204,7 @@
     <div class="seperator">
         /
     </div>
-    <Button disabled={game.solution === null} className="upload" onclick={handleUpload} style="background-color: #fff; color: #000">
+    <Button disabled={game.solution === null} className="upload" onclick={publishLevel} style="background-color: #fff; color: #000">
         {uploadStatus}
     </Button>
 </section>

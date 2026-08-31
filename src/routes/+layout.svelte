@@ -32,6 +32,10 @@
         --reset-red: #c20202;
     }
 
+    :global(body) {
+        background-color: var(--water-blue);
+    }
+
     @font-face {
         font-family: "Halogen";
         src: url("$lib/assets/fonts/Halogen.ttf")
