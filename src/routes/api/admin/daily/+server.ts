@@ -1,7 +1,7 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { validateLevelPayload } from '$lib/server/levels';
-import { solveLevel } from '$lib/state/solver';
+import { solveLevel } from '$lib/state/game/solver';
 
 export const PUT: RequestHandler = async ({ request, platform }) => {
     const env = platform?.env;

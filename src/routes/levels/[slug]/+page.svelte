@@ -3,7 +3,7 @@
     import Board from "$lib/components/game/board.svelte";
     import ts from "$lib/assets/sprites/spritesheet.png";
     import cs from "$lib/assets/sprites/charactersheet.png";
-    import { Game, MOVE_DICT, type MoveName, type GameParams } from "$lib/state/game.svelte";
+    import { Game, MOVE_DICT, type MoveName, type GameParams } from "$lib/state/game/game.svelte";
     import { onMount } from "svelte";
     import Modal from "$lib/components/util/modal.svelte";
     import wave from "$lib/assets/images/wave.gif";

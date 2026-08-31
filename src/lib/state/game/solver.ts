@@ -1,5 +1,5 @@
 import { type MoveName } from "./game.svelte";
-import { mapToBoard, BOARD_BORDER, type Position, type Move } from "./tiles";
+import { mapToBoard, BOARD_BORDER, type Position, type Move } from "../tile/tiles";
 
 
 const MOVE_VECTORS: Record<MoveName, { x: Move, y: Move }> = {

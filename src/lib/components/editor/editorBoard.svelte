@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { mapToBoard, BOARD_BORDER, getTile } from '$lib/state/tiles';
-    import type { Position } from '$lib/state/tile';
-    import { type Rotation } from '$lib/state/ruletile';
+    import { mapToBoard, BOARD_BORDER, getTile } from '$lib/state/tile/tiles';
+    import type { Position } from '$lib/state/tile/tile';
+    import { type Rotation } from '$lib/state/tile/ruletile';
 
     let {
         board,
@@ -31,7 +31,7 @@
     const SCALE = 4;
 
     let renderBoard = $derived(mapToBoard(board));
-    let boardStandin = $derived({ board: renderBoard } as unknown as import('$lib/state/game.svelte').Game);
+    let boardStandin = $derived({ board: renderBoard } as unknown as import('$lib/state/game/game.svelte').Game);
 
     let canvasWidth = $derived((renderBoard[0]?.length ?? 0) * TILE_SIZE * SCALE);
     let canvasHeight = $derived(renderBoard.length * TILE_SIZE * SCALE);

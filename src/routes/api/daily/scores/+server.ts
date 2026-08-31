@@ -2,7 +2,7 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { normalizeLevelPayload } from '$lib/data/leveldata';
 import { emptyDistribution, calcTopPercent, type ScoreDistribution } from '$lib/data/scores';
-import { solveLevel } from '$lib/state/solver';
+import { solveLevel } from '$lib/state/game/solver';
 import { getDailyScoreDistribution } from '$lib/server/scores';
 
 const MAX_MOVES = 1000; 

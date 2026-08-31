@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { Game, MoveName } from "$lib/state/game.svelte";
+    import type { Game, MoveName } from "$lib/state/game/game.svelte";
     import Button from "./button.svelte";
     import Histograph from "../game/histogram.svelte";
 

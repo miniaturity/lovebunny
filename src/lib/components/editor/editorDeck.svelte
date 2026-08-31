@@ -1,6 +1,6 @@
 <script lang="ts">
     import { BRUSHES } from '$lib/data/leveldata';
-    import { Game, type EditorMode, type MoveName } from '$lib/state/game.svelte';
+    import { Game, type EditorMode, type MoveName } from '$lib/state/game/game.svelte';
     import Button from '../util/button.svelte';
 
     export type SolveStatus =

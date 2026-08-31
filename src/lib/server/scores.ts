@@ -1,4 +1,4 @@
-import { Game, MOVE_DICT, type MoveName } from '$lib/state/game.svelte';
+import { Game, MOVE_DICT, type MoveName } from '$lib/state/game/game.svelte';
 import type { LevelData } from '$lib/data/leveldata';
 
 export interface ScoreRecord {

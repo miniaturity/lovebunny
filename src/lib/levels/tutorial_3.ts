@@ -1,5 +1,5 @@
 import type { DialogueTree } from "$lib/components/game/dialogue.svelte";
-import type { GameParams } from "../state/game.svelte";
+import type { GameParams } from "../state/game/game.svelte";
 
 const LEVEL = [
     [1, 1, 1, 1, 0, 1, 1, 1, 1, 1],

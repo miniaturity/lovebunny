@@ -1,5 +1,5 @@
-import type { Position } from "$lib/state/tile";
-import type { SpriteCoord } from "$lib/state/ruletile";
+import type { Position } from "$lib/state/tile/tile";
+import type { SpriteCoord } from "$lib/state/tile/ruletile";
 
 export interface LevelData {
     board: number[][];

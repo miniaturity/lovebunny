@@ -2,7 +2,7 @@
     import Board from "$lib/components/game/board.svelte";
     import ts from "$lib/assets/sprites/spritesheet.png";
     import cs from "$lib/assets/sprites/charactersheet.png";
-    import { Game, MOVE_DICT, type GameParams, type MoveName } from "$lib/state/game.svelte";
+    import { Game, MOVE_DICT, type GameParams, type MoveName } from "$lib/state/game/game.svelte.js";
     import { onMount } from "svelte";
     import { hasVisited, hasCompletedTip } from "$lib/state/store";
     import Modal from "$lib/components/util/modal.svelte";
@@ -417,7 +417,17 @@
                     <button onclick={nextDay} disabled={!canGoNext} class="carrot-right">
                         <img alt="" src={carrot_end}/>
                     </button>
+
+                    <div class="hover-overlay-left">
+                        last day
+                    </div>
+
+                    <div class="hover-overlay-right">
+                        next day
+                    </div>
                 </div>
+
+                
             </div>
 
             <div class="author">
@@ -458,7 +468,7 @@
                     disabled={alreadyPlayedToday || game.status !== "playing"}
                 >Reset</Button>
 
-                <Button onclick={() => { showWinModal = true; game.status = "won" }} disabled={game.status !== "won" && game.status !== "playback"}>
+                <Button onclick={() => { showWinModal = true; game.status = "won" }} disabled={!scoreSubmitted || game.status === "playback"}>
                     Stats
                 </Button>
             </div>
@@ -530,6 +540,31 @@
         }
     }
 
+
+
+    .hover-overlay-left, .hover-overlay-right {
+        position: absolute;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        pointer-events: none;
+        opacity: 0;
+        
+        transition: opacity 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
+    }
+
+    .hover-overlay-left {
+        z-index: 4;
+    }
+
+    .hover-overlay-right {
+        z-index: 5;
+    }
+
     .modal-content {
         --p: 12px;
         padding: var(--p);
@@ -581,10 +616,26 @@
 
     .day:has(.carrot-left:hover) {
         margin-right: 2rem;
+
+        .day-text > span {
+            opacity: 0;
+        }
+
+        .hover-overlay-left {
+            opacity: 1;
+        }
     }
 
     .day:has(.carrot-right:hover) {
         margin-left: 2rem;
+
+        .day-text > span {
+            opacity: 0;
+        }
+
+        .hover-overlay-right {
+            opacity: 1;
+        }
     } 
 
     .menu-mode {
@@ -676,6 +727,7 @@
 
         & .day {
             display: flex;
+            position: relative;
             flex-direction: row;
             align-items: center;
             justify-content: center;
@@ -692,6 +744,10 @@
                 white-space: nowrap;
                 background-color: var(--carrot-orange);
                 padding: 8px;
+
+                & span {
+                    transition: opacity 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
+                }
             }
         }
     }

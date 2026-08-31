@@ -1,4 +1,4 @@
-import type { Game, GameParams } from "./state/game.svelte";
+import type { Game, GameParams } from "./state/game/game.svelte";
 
 const DEMO_LEVEL = [
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],

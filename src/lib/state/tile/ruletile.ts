@@ -1,4 +1,4 @@
-import type { Game } from "./game.svelte";
+import type { Game } from "../game/game.svelte";
 import type { Tile } from "./tile";
 import { AnimatedTile } from "./animatedtile";
 

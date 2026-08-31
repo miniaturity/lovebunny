@@ -1,7 +1,7 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { validateLevelPayload, sanitizeText, hashLevel, nextCommunityId, MIN_MOVES_REQUIRED } from '$lib/server/levels';
-import { solveLevel } from '$lib/state/solver';
+import { solveLevel } from '$lib/state/game/solver';
 
 const MAX_LEVEL_BYTES = 20_000;
 const DAILY_QUOTA_PER_IP = 8;

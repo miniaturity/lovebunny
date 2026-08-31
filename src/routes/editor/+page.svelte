@@ -7,7 +7,7 @@
     import wave from "$lib/assets/images/wave.gif";
     import Navlink from "$lib/components/util/navlink.svelte";
     import { DEFAULT_GAME } from "$lib/levels/default";
-    import { solveLevel } from "$lib/state/solver";
+    import { solveLevel } from "$lib/state/game/solver";
     import {
         type LevelData,
         cloneBoard,
@@ -19,7 +19,7 @@
         MAX_BOARD_SIZE
     } from "$lib/data/leveldata";
     import Board from "$lib/components/game/board.svelte";
-    import { Game, type EditorMode } from "$lib/state/game.svelte";
+    import { Game, type EditorMode } from "$lib/state/game/game.svelte";
     import { publishLevel } from "$lib/api/levels";
     import Modal from "$lib/components/util/modal.svelte";
     import { editorLevel } from "$lib/state/store";

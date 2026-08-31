@@ -1,5 +1,5 @@
-import { AnimatedTile } from "./animatedtile";
-import type { SpriteCoord } from "./ruletile";
+import { AnimatedTile } from "../tile/animatedtile";
+import type { SpriteCoord } from "../tile/ruletile";
 
 
 export abstract class StateTile extends AnimatedTile {

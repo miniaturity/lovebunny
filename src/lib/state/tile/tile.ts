@@ -1,6 +1,6 @@
-import type { Game } from '$lib/state/game.svelte';
-import type { SpriteCoord } from './ruletile';
-import { type Entity, type EntityType } from "./entity";
+import type { Game } from '$lib/state/game/game.svelte';
+import type { SpriteCoord } from '../tile/ruletile';
+import { type Entity, type EntityType } from "../entity/entity";
 
 export type Position = { x: number, y: number };
 

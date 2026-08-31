@@ -1,7 +1,7 @@
 import { AnimatedTile } from './animatedtile';
-import type { Game } from './game.svelte';
-import { RuleTile, type SpriteCoord } from './ruletile';
-import { Tile, type Position, StaticTile } from './tile';
+import type { Game } from '../game/game.svelte';
+import { RuleTile, type SpriteCoord } from '../tile/ruletile';
+import { Tile, type Position, StaticTile } from '../tile/tile';
 
 export type Move = -1 | 0 | 1;
 

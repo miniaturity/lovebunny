@@ -1,5 +1,5 @@
-import { type Position, type Move, type Tile, mapToBoard, BOARD_BORDER, type Direction } from "$lib/state/tiles";
-import { type Entity } from "./entity";
+import { type Position, type Move, type Tile, mapToBoard, BOARD_BORDER, type Direction } from "$lib/state/tile/tiles";
+import { type Entity } from "../entity/entity";
 import { solveLevel } from "./solver";
 
 export type MoveName = "up" | "down" | "left" | "right";
@@ -21,10 +21,13 @@ export class Game {
     public b = $state<Entity>({ id: 'bunny_b', pos: { x: 6, y: 5 }, facing: 'right' });
     public hearts = $state<Entity>({ id: 'hearts', pos: { x: 1, y: 1 }, facing: 'right' });
     public status = $state<GameStatus>('menu');
+    public carrotScore = $state<number>(0);
     public moves = $state<MoveName[]>([]);
     public solution = $state<MoveName[] | null>(null);
     public lastMove = $state<MoveName>();
     public undone = $state<boolean>(false);
+
+    public static SCORE_PER_CARROT = 5;
 
     constructor(
         initBoard: number[][],
@@ -43,6 +46,10 @@ export class Game {
         if (!this.solution) {
             console.error("Level is unsolvable.");
         }
+
+        $effect(() => {
+
+        });
     }
 
     public move(dx: Move, dy: Move) {
@@ -160,7 +167,5 @@ export class Game {
         if (dx > 0) return 'right';
         return null;
     }
-
-    
 }
 

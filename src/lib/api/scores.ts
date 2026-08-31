@@ -1,5 +1,5 @@
 import { getPlayerId } from '$lib/client/player';
-import type { MoveName } from '$lib/state/game.svelte';
+import type { MoveName } from '$lib/state/game/game.svelte';
 
 export async function submitScore(date: string, moves: MoveName[]) {
     const res = await fetch('/api/daily/score', {

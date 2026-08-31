@@ -2,7 +2,7 @@
     import Board from "$lib/components/game/board.svelte";
     import ts from "$lib/assets/sprites/spritesheet.png";
     import cs from "$lib/assets/sprites/charactersheet.png";
-    import { Game, MOVE_DICT, type GameParams, type MoveName } from "$lib/state/game.svelte";
+    import { Game, MOVE_DICT, type GameParams, type MoveName } from "$lib/state/game/game.svelte";
     import { T1_DIALOGUE, T1_GAME } from "$lib/levels/tutorial_1";
     import { onMount } from "svelte";
 

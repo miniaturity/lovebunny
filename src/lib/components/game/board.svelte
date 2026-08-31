@@ -1,8 +1,8 @@
 <script lang="ts">
-    import { Game } from '$lib/state/game.svelte';
-    import { type Rotation } from '$lib/state/ruletile';
-    import { type Move } from '$lib/state/tiles';
-    import { type Entity } from '$lib/state/entity';
+    import { Game } from '$lib/state/game/game.svelte';
+    import { type Rotation } from '$lib/state/tile/ruletile';
+    import { type Move } from '$lib/state/tile/tiles';
+    import { type Entity } from '$lib/state/entity/entity';
 
     let { 
         game, 

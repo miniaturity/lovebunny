@@ -2,7 +2,7 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getPlayerScore, submitDailyScore, verifySolution } from '$lib/server/scores';
 import { validateLevelPayload } from '$lib/server/levels';
-import type { MoveName } from '$lib/state/game.svelte';
+import type { MoveName } from '$lib/state/game/game.svelte';
 
 const MAX_MOVES = 500;
 const VALID_MOVES = new Set<MoveName>(['up', 'down', 'left', 'right']);

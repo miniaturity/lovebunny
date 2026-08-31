@@ -1,4 +1,4 @@
-import type { GameParams } from "$lib/state/game.svelte";
+import type { GameParams } from "$lib/state/game/game.svelte";
 
 const LEVEL = [
     [1, 1, 1, 2, 1, 1, 1, 2],

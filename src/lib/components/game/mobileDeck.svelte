@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { MoveName } from "$lib/state/game.svelte";
+    import type { MoveName } from "$lib/state/game/game.svelte";
     import Button from "../util/button.svelte";
 
     let {
