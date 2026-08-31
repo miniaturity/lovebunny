@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { BRUSHES, type LevelData } from '$lib/data/leveldata';
+    import { BRUSHES } from '$lib/data/leveldata';
     import { Game, type EditorMode, type MoveName } from '$lib/state/game.svelte';
     import Button from '../util/button.svelte';
 
