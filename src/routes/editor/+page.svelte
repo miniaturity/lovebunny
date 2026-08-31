@@ -1,11 +1,11 @@
 <script lang="ts">
-    import EditorBoard from "$lib/components/editor/editorboard.svelte";
-    import EditorDeck, { type SolveStatus, type Tool, type UploadStatus } from "$lib/components/editor/EditorDeck.svelte";
+    import EditorBoard from "$lib/components/editor/editorBoard.svelte";
+    import EditorDeck, { type SolveStatus, type Tool, type UploadStatus } from "$lib/components/editor/editorDeck.svelte";
     import ts from "$lib/assets/sprites/spritesheet.png";
     import cs from "$lib/assets/sprites/charactersheet.png";
     import { onMount } from "svelte";
     import wave from "$lib/assets/images/wave.gif";
-    import Navlink from "$lib/components/navlink.svelte";
+    import Navlink from "$lib/components/util/navlink.svelte";
     import { DEFAULT_GAME } from "$lib/levels/default";
     import { solveLevel } from "$lib/state/solver";
     import {
@@ -18,12 +18,12 @@
         MIN_BOARD_SIZE,
         MAX_BOARD_SIZE
     } from "$lib/data/leveldata";
-    import Board from "$lib/components/board.svelte";
+    import Board from "$lib/components/game/board.svelte";
     import { Game, type EditorMode } from "$lib/state/game.svelte";
     import { publishLevel } from "$lib/api/levels";
-    import Modal from "$lib/components/modal.svelte";
+    import Modal from "$lib/components/util/modal.svelte";
     import { editorLevel } from "$lib/state/store";
-    import Button from "$lib/components/button.svelte";
+    import Button from "$lib/components/util/button.svelte";
 
     import carrot_start from "$lib/assets/images/carrot-start.png";
     import carrot_end from "$lib/assets/images/carrot-end.png";
@@ -135,6 +135,7 @@
         uploadStatus = "uploading...";
 
         const status = await handlePublish();
+        showUploadModal = false;
         uploadStatus = status;
     }
 

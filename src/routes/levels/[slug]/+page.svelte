@@ -1,17 +1,17 @@
 <!-- src/routes/levels/[id]/+page.svelte -->
 <script lang="ts">
-    import Board from "$lib/components/board.svelte";
+    import Board from "$lib/components/game/board.svelte";
     import ts from "$lib/assets/sprites/spritesheet.png";
     import cs from "$lib/assets/sprites/charactersheet.png";
     import { Game, MOVE_DICT, type MoveName, type GameParams } from "$lib/state/game.svelte";
     import { onMount } from "svelte";
-    import Modal from "$lib/components/modal.svelte";
+    import Modal from "$lib/components/util/modal.svelte";
     import wave from "$lib/assets/images/wave.gif";
-    import Button from "$lib/components/button.svelte";
+    import Button from "$lib/components/util/button.svelte";
     import carrot_start from "$lib/assets/images/carrot-start.png";
     import carrot_end from "$lib/assets/images/carrot-end.png";
-    import Navlink from "$lib/components/navlink.svelte";
-    import Winmodal from "$lib/components/winmodal.svelte";
+    import Navlink from "$lib/components/util/navlink.svelte";
+    import Winmodal from "$lib/components/util/winmodal.svelte";
     import type { LevelData } from "$lib/data/leveldata";
     import type { PageData } from './$types';
 

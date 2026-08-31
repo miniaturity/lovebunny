@@ -1,5 +1,5 @@
 <script lang="ts">
-    import Board from "$lib/components/board.svelte";
+    import Board from "$lib/components/game/board.svelte";
     import ts from "$lib/assets/sprites/spritesheet.png";
     import cs from "$lib/assets/sprites/charactersheet.png";
     import { Game, MOVE_DICT, type GameParams, type MoveName } from "$lib/state/game.svelte";
@@ -7,17 +7,17 @@
     import { onMount } from "svelte";
 
     import wave from "$lib/assets/images/wave.gif";
-    import Button from "$lib/components/button.svelte";
+    import Button from "$lib/components/util/button.svelte";
 
-    import Navlink from "$lib/components/navlink.svelte";
+    import Navlink from "$lib/components/util/navlink.svelte";
 
     import carrot_start from "$lib/assets/images/carrot-start.png";
     import carrot_end from "$lib/assets/images/carrot-end.png";
-    import Dialogue, { type DialogueTree } from "$lib/components/dialogue.svelte";
+    import Dialogue, { type DialogueTree } from "$lib/components/game/dialogue.svelte";
     import { T2_DIALOGUE, T2_GAME } from "$lib/levels/tutorial_2";
     import { T3_DIALOGUE, T3_GAME } from "$lib/levels/tutorial_3";
     import { goto } from "$app/navigation";
-    import MobileDeck from "$lib/components/mobileDeck.svelte";
+    import MobileDeck from "$lib/components/game/mobileDeck.svelte";
 
 
     let tileSheet = $state<HTMLImageElement>();

@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { Game, MoveName } from "$lib/state/game.svelte";
     import Button from "./button.svelte";
-    import Histograph from "./histogram.svelte";
+    import Histograph from "../game/histogram.svelte";
 
     let { game, playback, distribution, totalPlayers, id, isUserMade = false }: {
         game: Game;

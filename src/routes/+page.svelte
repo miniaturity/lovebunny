@@ -1,26 +1,28 @@
 <script lang="ts">
-    import Board from "$lib/components/board.svelte";
+    import Board from "$lib/components/game/board.svelte";
     import ts from "$lib/assets/sprites/spritesheet.png";
     import cs from "$lib/assets/sprites/charactersheet.png";
     import { Game, MOVE_DICT, type GameParams, type MoveName } from "$lib/state/game.svelte";
-    import { DEMO_GAME } from "$lib/demo";
     import { onMount } from "svelte";
     import { hasVisited, hasCompletedTip } from "$lib/state/store";
-    import Modal from "$lib/components/modal.svelte";
+    import Modal from "$lib/components/util/modal.svelte";
 
     import love from "$lib/assets/images/love.png";
     import wave from "$lib/assets/images/wave.gif";
-    import Button from "$lib/components/button.svelte";
+    import Button from "$lib/components/util/button.svelte";
     import carrot_start from "$lib/assets/images/carrot-start.png";
     import carrot_end from "$lib/assets/images/carrot-end.png";
-    import Navlink from "$lib/components/navlink.svelte";
-    import Winmodal from "$lib/components/winmodal.svelte";
-    import MobileDeck from "$lib/components/mobileDeck.svelte";
+    import Navlink from "$lib/components/util/navlink.svelte";
+    import Winmodal from "$lib/components/util/winmodal.svelte";
+    import MobileDeck from "$lib/components/game/mobileDeck.svelte";
     import { fetchScoreDistribution, fetchMyScore, submitScore } from "$lib/api/scores";
-    import Dialogue, { type DialogueTree } from "$lib/components/dialogue.svelte";
+    import Dialogue, { type DialogueTree } from "$lib/components/game/dialogue.svelte";
+    import { goto } from "$app/navigation";
+
+    import { page } from "$app/state";
 
     let { data } = $props();
-    const gameParams: GameParams = $derived([data.daily.board, data.daily.a, data.daily.b, data.daily.title, data.daily.day, data.daily.author]);
+    let gameParams: GameParams = $derived([data.daily.board, data.daily.a, data.daily.b, data.daily.title, data.daily.day, data.daily.author]);
 
     let tileSheet = $state<HTMLImageElement>();
     let characterSheet = $state<HTMLImageElement>();
@@ -91,13 +93,18 @@
         };
     });
 
-    const today = new Date().toISOString().slice(0, 10);
+    let today = $derived<string>(data.today);
     let alreadyPlayedToday = $state(false); 
     let distribution = $state<Record<string, number>>({});
     let totalPlayers = $state(0);
 
+    $effect(() => {
+        today = data.today;
+    });
+
     async function loadDistribution() {
         try {
+            console.log(today);
             const result = await fetchScoreDistribution(today);
             distribution = result.distribution;
             totalPlayers = result.totalPlayers;
@@ -141,13 +148,12 @@
     $effect(() => {
         if (game.status === "won" && !scoreSubmitted && confirmedSubmission) {
             scoreSubmitted = true;
+            console.log(today);
             submitScore(today, game.moves).then((result) => {
                 if (result.ok) loadDistribution();
             });
         }
     });
-
-
 
     const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
     
@@ -163,7 +169,6 @@
         }
     }
     
-
     function mobileMove(move: MoveName) {
         const { x, y } = MOVE_DICT[move];
         game.move(x, y);
@@ -173,7 +178,6 @@
         const { x, y } = MOVE_DICT[move];
         playbackGame.move(x, y);
     }
-
 
     function play() {
         game.status = "playing";
@@ -216,7 +220,36 @@
 
     const closeModal = () => { if (game.status === "menu") game.status = "playing"; }
 
-    
+    function shiftDate(dateStr: string, deltaDays: number): string {
+        const t = new Date(`${dateStr}T00:00:00.000Z`).getTime();
+        return new Date(t + deltaDays * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    }
+
+    let canGoNext = $derived(today < data.serverToday);
+
+    async function lastDay() {
+        if (game.day === 1) return;
+
+        const target = shiftDate(today, -1);
+        try {
+            await goto(`/?date=${target}`);
+        } catch (err) {
+            console.error(err);
+            goto("/");
+        }
+    }
+
+    async function nextDay() {
+        if (!canGoNext) return;
+
+        const target = shiftDate(today, 1);
+        try {
+            await goto(`/?date=${target}`);
+        } catch (err) {
+            console.error(err);
+            goto("/");
+        }
+    }
 
     const title = "bunniesin.love";
 
@@ -254,7 +287,8 @@
             focusedMenu = false;
             setTimeout(() => menuMode = false, 1000);
         }
-    })
+    });
+
 </script>
 
 <svelte:head>
@@ -372,13 +406,17 @@
         {#if game}
             <div class="subtitle">
                 <div class="day">
-                    <img alt="" src={carrot_start}/>
+                    <button onclick={lastDay} disabled={game.day === 1} class="carrot-left">
+                        <img alt="" src={carrot_start}/>
+                    </button>
                     <div class="day-text">
                         {#each (`day ${game.day} - ` + game.title) as char, i}
                             <span class="char" style={`--index: ${i}`}>{char === ' ' ? '\u00A0' : char}</span>
                         {/each}
                     </div>
-                    <img alt="" src={carrot_end}/>
+                    <button onclick={nextDay} disabled={!canGoNext} class="carrot-right">
+                        <img alt="" src={carrot_end}/>
+                    </button>
                 </div>
             </div>
 
@@ -486,6 +524,10 @@
                 color: #d8d8d8;
             }
         }
+
+        @media screen and (max-width: 768px) {
+            font-size: 0.4rem;
+        }
     }
 
     .modal-content {
@@ -526,6 +568,24 @@
         background-color: var(--water-blue);
         overflow-x: hidden;
     }
+
+    .carrot-left, .carrot-right {
+        border: none;
+        margin: 0;
+        background: transparent;
+
+        width: 100%; height: 100%;
+
+        cursor: pointer;
+    }
+
+    .day:has(.carrot-left:hover) {
+        margin-right: 2rem;
+    }
+
+    .day:has(.carrot-right:hover) {
+        margin-left: 2rem;
+    } 
 
     .menu-mode {
         filter: brightness(0.5);
@@ -620,6 +680,8 @@
             align-items: center;
             justify-content: center;
             padding: 12px;
+
+            transition: margin 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 
             & img {
                 height: 100%; width: auto;

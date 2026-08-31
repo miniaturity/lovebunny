@@ -34,6 +34,7 @@
 
     :global(body) {
         background-color: var(--water-blue);
+        margin: 0;
     }
 
     @font-face {

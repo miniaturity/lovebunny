@@ -26,6 +26,9 @@
     "wrangler": "^4.118.0"
   },
   "dependencies": {
+    "@types/matter-js": "^0.20.2",
+    "matter-js": "^0.20.0",
+    "motion": "^13.1.1",
     "svelte-persisted-store": "^0.12.0"
   }
 }

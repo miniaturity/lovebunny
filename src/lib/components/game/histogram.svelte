@@ -249,10 +249,4 @@
         text-align: center;
         opacity: 0.8;
     }
-
-    .empty {
-        text-align: center;
-        opacity: 0.7;
-        font-size: 13px;
-    }
 </style>

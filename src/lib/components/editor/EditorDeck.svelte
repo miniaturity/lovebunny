@@ -1,7 +1,7 @@
 <script lang="ts">
     import { BRUSHES, type LevelData } from '$lib/data/leveldata';
     import { Game, type EditorMode, type MoveName } from '$lib/state/game.svelte';
-    import Button from '../button.svelte';
+    import Button from '../util/button.svelte';
 
     export type SolveStatus =
         | { state: 'checking' }
