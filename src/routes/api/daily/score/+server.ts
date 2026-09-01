@@ -50,12 +50,13 @@ export const POST: RequestHandler = async ({ request, platform, getClientAddress
     const { level, error: levelError } = validateLevelPayload(await levelObj.json());
     if (levelError || !level) throw error(500, `That day's level is corrupted in storage: ${levelError}`);
 
-    if (!verifySolution(level, moves as MoveName[])) {
+    const { solved, score } = verifySolution(level, moves as MoveName[]);
+    if (!solved) {
         throw error(400, "That move sequence doesn't solve today's puzzle.");
     }
 
-    const result = await submitDailyScore(env.lovebunny_levels, date, playerId, moves as MoveName[]);
+    const result = await submitDailyScore(env.lovebunny_levels, date, playerId, moves as MoveName[], score);
     if (!result.ok) throw error(409, "You've already submitted a score for today.");
 
-    return json({ ok: true, moves: moves.length }, { status: 201 });
+    return json({ ok: true, score }, { status: 201 });
 };

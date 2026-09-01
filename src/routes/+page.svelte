@@ -188,7 +188,7 @@
     function reset(playing: boolean = true) {
         if (alreadyPlayedToday || (game.status === "won" && scoreSubmitted)) return;
         
-        if (game.status === "won" && (bestGame.moves.length === 0 || bestGame.moves.length > game.moves.length)) {
+        if (game.status === "won" && (bestGame.moves.length === 0 || bestGame.getScore() > game.getScore())) {
             bestGame.moves = [...game.moves];
             bestGame.a = { ...game.a };
             bestGame.b = { ...game.b };
@@ -458,7 +458,7 @@
                     {/if}
                 </button>
                 {#if bestGame.moves.length !== 0} 
-                    <button class="best" onclick={setToBest}>best: {bestGame.moves.length} {"<"}</button>
+                    <button class="best" onclick={setToBest}>best: {bestGame.getScore()} {"<"}</button>
                 {/if}
             </div>
 

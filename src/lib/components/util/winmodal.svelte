@@ -16,7 +16,7 @@
     const isTuye = getContext('isTuye');
 
     let shareStatus = $state<"success" | "fail" | null>(null);
-    let playerScore = $derived(game.moves.length);
+    let playerScore = $derived(game.getScore());
 
     export function getHex(min: number, max: number, value: number): string {
         const minR = 168, minG = 230, minB = 207;
@@ -41,13 +41,11 @@
 
     let percentile = $derived.by(() => {
         if (!distribution || !totalPlayers) return null;
-        const yours = game.moves.length;
+        const yours = game.getScore();
 
-        let atOrBelowYourMoveCount = 0;
         let atOrWorseCount = 0;
-         for (const [movesStr, count] of Object.entries(distribution)) {
-            if (Number(movesStr) >= yours) atOrBelowYourMoveCount += count;
-            if (Number(movesStr) >= yours) atOrWorseCount += count;
+         for (const [scoreStr, count] of Object.entries(distribution)) {
+            if (Number(scoreStr) >= yours) atOrWorseCount += count;
         }
 
         const percentAtOrWorse = (atOrWorseCount / totalPlayers) * 100;
@@ -69,7 +67,7 @@
 `${!isUserMade ? `day ${game.day}` : `user level`} - "${game.title}" by ${game.author}
 
 ${"🥕".repeat(getCarrotCount())}
-${isTuye ? "\n🌈 TUYE mode active" : ""} ${game.moves.length === game.solution.moves.length ? `\n🐰 PERFECT game!\n` : ""}
+${isTuye ? "\n🌈 TUYE mode active" : ""} ${game.getScore() === game.solution.score ? `\n🐰 PERFECT game!\n` : ""}
 ${!isUserMade && percentile ? `placed ${percentile.direction === "top" ? "top" : "bottom"} ${percentile.percent}% of ${totalPlayers} 🐇` : ``}
 bunniesin.love${isUserMade ? `/levels/${id}` : ``}  `;
 
@@ -86,13 +84,13 @@ bunniesin.love${isUserMade ? `/levels/${id}` : ``}  `;
 
         let carrotCount = 1;
 
-        const yourMoves = game.moves.length;
-        const solution = game.solution.moves.length;
+        const yourScore = game.getScore();
+        const solutionScore = game.solution.score;
 
-        if (yourMoves <= solution + 10) carrotCount = 2;
-        if (yourMoves <= solution + 5) carrotCount = 3;
-        if (yourMoves <= solution + 2) carrotCount = 4;
-        if (yourMoves === solution) carrotCount = 5;
+        if (yourScore <= solutionScore + 10) carrotCount = 2;
+        if (yourScore <= solutionScore + 5) carrotCount = 3;
+        if (yourScore <= solutionScore + 2) carrotCount = 4;
+        if (yourScore === solutionScore) carrotCount = 5;
         
         return carrotCount;
     }
@@ -103,7 +101,7 @@ bunniesin.love${isUserMade ? `/levels/${id}` : ``}  `;
 <div class="win-modal">
     <div class="top">
         <div class="score">
-            solved in&nbsp;<span>{playerScore}</span>&nbsp;moves
+            you scored&nbsp;<span>{playerScore}</span>
         </div>
         
         {#if !isUserMade}
@@ -123,13 +121,13 @@ bunniesin.love${isUserMade ? `/levels/${id}` : ``}  `;
         <div class="bottom">
             {#if distribution}
                 <div class="graph">
-                    <Histograph {distribution} optimal={game.solution?.moves.length ?? 0} {playerScore} />
+                    <Histograph {distribution} optimal={game.solution?.score ?? 0} {playerScore} />
                 </div>
             {/if}
         </div>
     {:else}
         <div class="score">
-            optimal: {game.solution?.moves.length ?? 0} moves
+            optimal score: {game.solution?.score ?? 0}
         </div>
     {/if}
 

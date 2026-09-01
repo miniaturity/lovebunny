@@ -7,6 +7,7 @@ export interface ScoreRecord {
     date: string;
     submittedAt: string;
     moves: MoveName[]; 
+    score: number;
 }
 
 const scoreKey = (date: string, playerId: string) => `scores/${date}/${playerId}.json`;
@@ -20,32 +21,33 @@ export async function submitDailyScore(
     bucket: R2Bucket,
     date: string,
     playerId: string,
-    moves: MoveName[]
+    moves: MoveName[],
+    score: number
 ): Promise<{ ok: true } | { ok: false; reason: 'already-played' }> {
-    const record: ScoreRecord = { playerId, date, submittedAt: new Date().toISOString(), moves };
+    const record: ScoreRecord = { playerId, date, submittedAt: new Date().toISOString(), moves, score };
 
     const written = await bucket.put(scoreKey(date, playerId), JSON.stringify(record), {
-        customMetadata: { moveCount: String(moves.length) },
+        customMetadata: { score: String(score) },
         onlyIf: { etagDoesNotMatch: '*' }
     });
 
     return written ? { ok: true } : { ok: false, reason: 'already-played' };
 }
 
-export function verifySolution(level: LevelData, moves: MoveName[]): boolean {
+export function verifySolution(level: LevelData, moves: MoveName[]): { solved: boolean; score: number } {
     const game = new Game(level.board, level.a, level.b, level.title, level.day, level.author, level.carrots);
     game.status = 'playing';
     game.solution = solveLevel(level.board, level.a, level.b, level.carrots); 
 
     for (const move of moves) {
         const vector = MOVE_DICT[move];
-        if (!vector) return false;
+        if (!vector) return { solved: false, score: 0 };
         game.move(vector.x, vector.y);
     }
 
     // @ts-ignore
     // game.move changes game.status
-    return game.status === 'won';
+    return { solved: game.status === 'won', score: game.getScore() };
 }
 
 export interface ScoreDistribution {
@@ -68,9 +70,10 @@ export async function getDailyScoreDistribution(bucket: R2Bucket, date: string):
         );
 
         for (const obj of listed.objects) {
-            const moveCount = obj.customMetadata?.moveCount;
-            if (!moveCount) continue;
-            distribution[moveCount] = (distribution[moveCount] ?? 0) + 1;
+            // for levels made before score update
+            const score = obj.customMetadata?.score ?? obj.customMetadata?.moveCount;
+            if (!score) continue;
+            distribution[score] = (distribution[score] ?? 0) + 1;
             totalPlayers++;
         }
         cursor = listed.truncated ? listed.cursor : undefined;

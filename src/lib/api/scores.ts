@@ -17,7 +17,7 @@ export async function submitScore(date: string, moves: MoveName[]) {
 export async function fetchMyScore(date: string) {
     const res = await fetch(`/api/daily/score?date=${date}&playerId=${getPlayerId()}`);
     if (!res.ok) return null;
-    return (await res.json()) as { moves: MoveName[]; submittedAt: string };
+    return (await res.json()) as { moves: MoveName[]; score: number; submittedAt: string };
 }
 
 

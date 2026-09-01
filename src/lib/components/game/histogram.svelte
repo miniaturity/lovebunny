@@ -31,19 +31,19 @@
         const cols: Column[] = [];
 
         for (let offset = COLUMN_COUNT - 2; offset >= 0; offset--) {
-            const moves = optimal + offset;
+            const score = optimal + offset;
             cols.push({
                 offset,
                 isOverflow: false,
                 moveLabel: offset === 0 ? "opt" : `+${offset}`,
-                count: distribution[String(moves)] ?? 0,
-                isPlayerColumn: moves === playerScore
+                count: distribution[String(score)] ?? 0,
+                isPlayerColumn: score === playerScore
             });
         }
 
         let overflowCount = 0;
-        for (const [movesStr, count] of Object.entries(distribution)) {
-            if (Number(movesStr) >= OVERFLOW_FROM) overflowCount += count;
+        for (const [scoreStr, count] of Object.entries(distribution)) {
+            if (Number(scoreStr) >= OVERFLOW_FROM) overflowCount += count;
         }
         cols.unshift({
             offset: 9,
@@ -85,7 +85,7 @@
 
 <div class="histogram">
   
-        <svg viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`} role="img" aria-label="distribution of moves taken to solve today's puzzle">
+        <svg viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`} role="img" aria-label="distribution of scores for today's puzzle">
             <line
                 x1="0" y1={BAR_AREA_BOTTOM} x2={CHART_WIDTH} y2={BAR_AREA_BOTTOM}
                 class="baseline"
@@ -143,7 +143,7 @@
                     >
                         <strong>{col.count}</strong> player{col.count === 1 ? "" : "s"}
                         <span class="tooltip-sub">
-                            {col.isOverflow ? `${optimal + 14}+ moves` : `${optimal + col.offset} move${col.offset === 0 && optimal === 1 ? "" : "s"}`}
+                            {col.isOverflow ? `score ${optimal + 14}+` : `score ${optimal + col.offset}`}
                             &middot; {percentLabel(col.count)}
                         </span>
                     </div>
