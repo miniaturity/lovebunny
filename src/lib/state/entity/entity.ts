@@ -13,6 +13,7 @@ export class Entity {
         public id: EntityType,
         public pos: Position,
         public facing: Direction,
+        public alive: boolean,
         public readonly isEffector?: boolean,
     ) {}
 
@@ -20,12 +21,12 @@ export class Entity {
 }
 
 export class CarrotEntity extends Entity {
-    constructor(s: ConstructorParameters<typeof Entity>) {
+    constructor(public readonly iid: number, ...s: ConstructorParameters<typeof Entity>) {
         super(...s);
     }
 
     override effectorEnter(game: Game): void {
-        
+        game.consumeCarrot(this.iid);
     }
 }
 

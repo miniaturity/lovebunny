@@ -2,18 +2,21 @@
     import { Game } from '$lib/state/game/game.svelte';
     import { type Rotation } from '$lib/state/tile/ruletile';
     import { type Move } from '$lib/state/tile/tiles';
-    import { type Entity } from '$lib/state/entity/entity';
+    import { CarrotEntity, type Entity } from '$lib/state/entity/entity';
+    import { onMount } from 'svelte';
 
     let { 
         game, 
         tileSheet, 
         characterSheet,
-        loaded
+        loaded,
+        isTuye
     }: { 
         game: Game; 
         tileSheet: HTMLImageElement; 
         characterSheet: HTMLImageElement; 
         loaded: boolean;
+        isTuye: boolean;
     } = $props();
 
     let canvasRef: HTMLCanvasElement;
@@ -116,8 +119,12 @@
                 }
             }
 
-            drawEntity(ctx, game.a, 0, timestamp); 
+            drawEntity(ctx, game.a, isTuye ? 3 : 0, timestamp); 
             drawEntity(ctx, game.b, 1, timestamp); 
+
+            game.carrots.forEach((carrot: CarrotEntity) => {
+                drawEntity(ctx, carrot, 4, timestamp);
+            });
 
             if (game.status === "won") {
                 drawEntity(ctx, game.hearts, 2, timestamp);

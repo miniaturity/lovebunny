@@ -7,7 +7,7 @@
     import wave from "$lib/assets/images/wave.gif";
     import Navlink from "$lib/components/util/navlink.svelte";
     import { DEFAULT_GAME } from "$lib/levels/default";
-    import { solveLevel } from "$lib/state/game/solver";
+    import { solveLevelAsync } from "$lib/state/game/solver";
     import {
         type LevelData,
         cloneBoard,
@@ -27,6 +27,8 @@
 
     import carrot_start from "$lib/assets/images/carrot-start.png";
     import carrot_end from "$lib/assets/images/carrot-end.png";
+    import { TileRegistry } from "$lib/state/tile/tiles";
+    import { BoundedUndoStack } from "$lib/data/stack";
 
     let tileSheet = $state<HTMLImageElement>();
     let characterSheet = $state<HTMLImageElement>();
@@ -77,12 +79,13 @@
         b: { ...initB },
         title: initTitle,
         day: initDay,
-        author: "anonymous"
+        author: "anonymous",
+        carrots: []
     });
 
 
     let editorMode = $state<EditorMode>("edit");
-    let game = $derived<Game>(new Game(level.board, level.a, level.b, level.title, level.day, level.author));
+    let game = $derived<Game>(new Game(level.board, level.a, level.b, level.title, level.day, level.author, level.carrots));
     let tool = $state<Tool>(0);
     let importError = $state<string | null>(null);
 
@@ -97,46 +100,91 @@
             level.board = cloneBoard($editorLevel.board);
             level.a = { ...$editorLevel.a };
             level.b = { ...$editorLevel.b };   
+            level.carrots = [...$editorLevel.carrots];
         }
     })
+
+    let resolveTimeout: ReturnType<typeof setTimeout> | undefined;
+    let cancelSolve: (() => void) | undefined;
 
     $effect(() => {
         const board = level.board;
         const a = level.a;
         const b = level.b;
+        const carrots = level.carrots ?? [];
 
         solveStatus = { state: "checking" };
+        $editorLevel = { board, a, b, carrots };
 
-        const solution = solveLevel(board, a, b);
-        solveStatus = solution
-            ? { state: "solvable", moves: solution }
-            : { state: "unsolvable" };
+        clearTimeout(resolveTimeout);
+        cancelSolve?.();
 
-        $editorLevel = { board, a, b };
+        resolveTimeout = setTimeout(() => {
+            const { result, cancel } = solveLevelAsync(board, a, b, carrots);
+            cancelSolve = cancel;
+            result.then((solved) => {
+                solveStatus = solved
+                    ? { state: "solvable", moves: solved.moves, score: solved.score }
+                    : { state: "unsolvable" };
+            });
+        }, 200);
 
-        return;
+        return () => {
+            clearTimeout(resolveTimeout);
+            cancelSolve?.();
+        };
     });
 
     let canShowModal = $state<boolean>(true);
     let showLevelUploadModal = $state<boolean>(false);
     let showClearWarningModal = $state<boolean>(false);
     let showUploadModal = $state<boolean>(false);
+    let showCarrotModal = $state<boolean>(false);
 
     let publishing = $state(false);
-    let uploadStatus = $state<UploadStatus>("upload");
     let publishResult = $state<string | null>(null);
     let publishLink = $state<string | null>(null);
+
+    const MAX_UNDO_STACK_LEN = 35;
+    let undoStack = $state<BoundedUndoStack<LevelData>>(new BoundedUndoStack(MAX_UNDO_STACK_LEN));
+    let redoStack = $state<BoundedUndoStack<LevelData>>(new BoundedUndoStack(MAX_UNDO_STACK_LEN));
+    
+    function snapshot(): void {
+        const snapshot: LevelData = $state.snapshot(level);
+
+        undoStack.push(snapshot);
+    }
+
+    function undo(): void {
+        if (undoStack.isEmpty()) return;
+
+        const popped = undoStack.pop();
+
+        if (popped) {
+            redoStack.push(level);
+            level = popped;
+        }
+    }
+
+    function redo(): void {
+        if (redoStack.isEmpty()) return;
+
+        const popped = redoStack.pop();
+
+        if (popped) {
+            undoStack.push(level);
+            level = popped;
+        }
+    }
+    
 
     function onUpload() {
         showUploadModal = true;
     }
 
     async function handleUpload() {
-        uploadStatus = "uploading...";
-
-        const status = await handlePublish();
+        await handlePublish();
         showUploadModal = false;
-        uploadStatus = status;
     }
 
     async function handlePublish(): Promise<UploadStatus> {
@@ -167,17 +215,33 @@
     }
 
     function handleCell(x: number, y: number) {
+        const isCellPassable = TileRegistry[level.board[y]?.[x]]().isPassable;
+
         if (typeof tool === "number") {
-            if (level.board[y]?.[x] === tool || (positionIsOnBunny(x, y))) return;
+            const isToolPassable = TileRegistry[tool]().isPassable;
+
+            if (level.board[y]?.[x] === tool || (positionIsOnBunny(x, y) && !isToolPassable)) return;
             const nextBoard = cloneBoard(level.board);
             nextBoard[y][x] = tool;
             level.board = nextBoard;
         } else if (tool === "bunnyA") {
-            if (level.a.x === x && level.a.y === y) return;
+            if (level.a.x === x && level.a.y === y || !isCellPassable) return;
             level.a = { x, y };
         } else if (tool === "bunnyB") {
-            if (level.b.x === x && level.b.y === y) return;
+            if (level.b.x === x && level.b.y === y || !isCellPassable) return;
             level.b = { x, y };
+        } else if (tool === "carrot") {
+            if (!isCellPassable) return;
+            const includes = level.carrots?.find((v) => (v.x === x && v.y === y));
+            
+            if (level.carrots && !includes) {
+                level.carrots.push({ x, y });
+            } else if (level.carrots && includes) {
+                const newCarrots = level.carrots.filter((v) => (v.x !== x || v.y !== y));
+                level.carrots = [...newCarrots];
+            } else {
+                level.carrots = [{ x, y }];
+            }
         }
     }
 
@@ -185,7 +249,7 @@
         const isBunnyA = x === level.a.x && y === level.a.y;
         const isBunnyB = x === level.b.x && y === level.b.y;
 
-        return isBunnyA && isBunnyB;
+        return isBunnyA || isBunnyB;
     }
 
     function handleResize(newRows: number, newCols: number) {
@@ -225,7 +289,8 @@
             b: { ...initB },
             title: initTitle,
             day: initDay,
-            author: "anonymous"
+            author: "anonymous",
+            carrots: []
         }
 
         showClearWarningModal = false;
@@ -235,7 +300,7 @@
         if (editorMode === "play") {
             game.status = "playing";
         } else if (editorMode === "edit" && game.status !== "menu") {
-            game = new Game(level.board, level.a, level.b, level.title, level.day, level.author);
+            game = new Game(level.board, level.a, level.b, level.title, level.day, level.author, level.carrots);
             game.status = "menu";
         }
     });
@@ -245,11 +310,70 @@
             showLevelUploadModal = true;
         }
     });
+
+    let carrotWarningShown = $state<boolean>(false);
+
+    $effect(() => {
+        if (game.carrots.length > 5 && !carrotWarningShown) {
+            showCarrotModal = true;
+            carrotWarningShown = true;
+        }
+    });
+
+    const KEYBINDS: Record<string, () => void> = {
+        "ctrl,z": undo,
+        "ctrl,y": redo
+    }
+
+    function onkeydown(e: KeyboardEvent) {
+        let keystr = [];
+
+        if (e.ctrlKey || e.metaKey) keystr.push("ctrl");
+        if (e.key.toLowerCase()) keystr.push(e.key.toLowerCase());
+
+        const keybind = keystr.join(",");
+        
+        if (KEYBINDS[keybind])
+            KEYBINDS[keybind]();
+    }
 </script>
 
 <svelte:head>
     <title>editor</title>
 </svelte:head>
+
+<svelte:body {onkeydown} />
+
+<Modal
+    bind:canShowModal
+    bind:showModal={showCarrotModal}
+>
+    <div class="u-modal-content">
+        
+        <div class="subtitle">
+            <div class="day">
+                <img alt="" src={carrot_start}/>
+                <div class="day-text">
+                    {#each "carrotsss" as char, i}
+                        <span class="char" style={`--index: ${i}`}>{char === ' ' ? '\u00A0' : char}</span>
+                    {/each}
+                </div>
+                <img alt="" src={carrot_end}/>
+            </div>
+        </div>
+        <p style="max-width: 250px; text-align: center; margin-bottom: 1rem;">
+            just a warning, having too many carrots can overload the solver!
+            you may have to wait multiple minutes.
+        </p>
+        <div class="u-button-dock">
+            <Button
+                onclick={() => { showCarrotModal = false; canShowModal = true }}
+            >
+                Okay
+            </Button>
+        </div>
+    </div>
+</Modal>
 
 <Modal
     bind:canShowModal
@@ -380,6 +504,8 @@
                     {tileSheet}
                     {characterSheet}
                     onCell={handleCell}
+                    carrotPositions={level.carrots ?? []}
+                    {snapshot}
                 />
             {:else if tileSheet && characterSheet}
                 <Board 
@@ -387,6 +513,7 @@
                     {tileSheet}
                     {characterSheet}
                     loaded
+                    isTuye={false}
                 />
             {/if}
         </div>

@@ -1,7 +1,14 @@
 <script lang="ts">
 	import favicon from '$lib/assets/favicon.png';
+    import { onMount } from 'svelte';
+    import { setContext } from 'svelte';
 
 	let { children } = $props();
+
+    let isTuye = $state<boolean>(Math.random() < 0.03);
+
+    // svelte-ignore state_referenced_locally
+    setContext('isTuye', isTuye);
 </script>
 
 <svelte:head>
@@ -17,6 +24,8 @@
 
     <meta name="theme-color" content="#5fade4" />
 </svelte:head>
+
+{@render children()}
 
 <style lang="scss">
 	:global(*) {
@@ -42,6 +51,4 @@
         src: url("$lib/assets/fonts/Halogen.ttf")
     }
 </style>
-
-{@render children()}
 

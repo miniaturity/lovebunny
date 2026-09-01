@@ -63,8 +63,8 @@ export const POST: RequestHandler = async ({ request, platform, getClientAddress
 	}
 
 	
-	const solution = solveLevel(daily.board, daily.a, daily.b);
-	if (solution && moves < solution.length) {
+	const solution = solveLevel(daily.board, daily.a, daily.b, daily.carrots);
+	if (solution && moves < solution.moves.length) {
 		throw error(422, "That move count is below this puzzle's optimal solution.");
 	}
 

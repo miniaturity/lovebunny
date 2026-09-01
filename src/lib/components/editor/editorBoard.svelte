@@ -2,6 +2,7 @@
     import { mapToBoard, BOARD_BORDER, getTile } from '$lib/state/tile/tiles';
     import type { Position } from '$lib/state/tile/tile';
     import { type Rotation } from '$lib/state/tile/ruletile';
+    import type { Tool } from './editorDeck.svelte';
 
     let {
         board,
@@ -10,15 +11,19 @@
         tool,
         tileSheet,
         characterSheet,
-        onCell
+        carrotPositions,
+        onCell,
+        snapshot,
     }: {
         board: number[][];
         a: Position;
         b: Position;
-        tool: number | 'bunnyA' | 'bunnyB';
+        tool: Tool;
         tileSheet: HTMLImageElement;
         characterSheet: HTMLImageElement;
+        carrotPositions: Position[];
         onCell: (x: number, y: number) => void;
+        snapshot: () => void;
     } = $props();
 
     let canvasRef: HTMLCanvasElement;
@@ -147,6 +152,10 @@
             drawEntity(ctx, a, 0, timestamp);
             drawEntity(ctx, b, 1, timestamp);
 
+            carrotPositions.forEach((carrot: Position) => {
+                drawEntity(ctx, carrot, 4, timestamp);
+            });
+
             animationFrameId = requestAnimationFrame(render);
         }
 
@@ -217,6 +226,8 @@
         const cell = cellFromPointer(e);
         if (!cell) return;
 
+        snapshot();
+
         canvasRef.setPointerCapture(e.pointerId);
         painting = true;
         lastCell = cell;
@@ -247,6 +258,7 @@
     height={canvasHeight}
     class="editor-canvas"
     class:tool-bunny={tool === 'bunnyA' || tool === 'bunnyB'}
+    class:tool-carrot={tool === "carrot"}
     onpointerdown={handlePointerDown}
     onpointermove={handlePointerMove}
     onpointerup={stopPainting}
@@ -262,7 +274,7 @@
         image-rendering: pixelated;
     }
 
-    .editor-canvas.tool-bunny {
+    .editor-canvas.tool-bunny, .editor-canvas.tool-carrot {
         cursor: pointer;
     }
 </style>

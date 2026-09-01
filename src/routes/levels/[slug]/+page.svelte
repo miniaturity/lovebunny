@@ -4,7 +4,7 @@
     import ts from "$lib/assets/sprites/spritesheet.png";
     import cs from "$lib/assets/sprites/charactersheet.png";
     import { Game, MOVE_DICT, type MoveName, type GameParams } from "$lib/state/game/game.svelte";
-    import { onMount } from "svelte";
+    import { getContext, onMount } from "svelte";
     import Modal from "$lib/components/util/modal.svelte";
     import wave from "$lib/assets/images/wave.gif";
     import Button from "$lib/components/util/button.svelte";
@@ -94,6 +94,8 @@
     }
 
     const pageTitle = "bunniesin.love";
+    
+    let scoreMode = $state<boolean>(false);
 </script>
 
 <svelte:head>
@@ -141,10 +143,24 @@
 
     <div class="game" bind:this={gameEl}>
         {#if tileSheet && characterSheet}
-            <Board {loaded} game={game.status === "playback" ? playbackGame : game} {tileSheet} {characterSheet} />
+            <Board 
+                {loaded} 
+                game={game.status === "playback" ? playbackGame : game} 
+                {tileSheet} 
+                {characterSheet} 
+                isTuye={getContext('isTuye')}    
+            />
         {/if}
         <div class="game-info">
-            <div class="moves">moves: {movesLength}</div>
+            <div class="moves">
+                <button class="score" onclick={() => scoreMode = !scoreMode}>
+                    {#if scoreMode}
+                        score: {game.getScore()}
+                    {:else}
+                        moves: {game.moves.length}
+                    {/if}
+                </button>
+            </div>
             <div class="button-dock">
                 <Button
                     onclick={() => game.undo()}

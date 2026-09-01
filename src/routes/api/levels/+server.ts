@@ -52,9 +52,9 @@ export const POST: RequestHandler = async ({ request, platform, getClientAddress
     const raw = JSON.stringify(level);
     if (raw.length > MAX_LEVEL_BYTES) throw error(413, 'Level is too large.');
 
-    const moves = solveLevel(level.board, level.a, level.b);
-    if (!moves) throw error(422, "this level isn't solvable. fix it in the editor before publishing.");
-    if (moves.length < MIN_MOVES_REQUIRED) {
+    const solved = solveLevel(level.board, level.a, level.b, level.carrots);
+    if (!solved) throw error(422, "this level isn't solvable. fix it in the editor before publishing.");
+    if (solved.moves.length < MIN_MOVES_REQUIRED) {
         throw error(422, 'this level is solved instantly. add more of a puzzle before publishing.');
     }
 
@@ -70,13 +70,13 @@ export const POST: RequestHandler = async ({ request, platform, getClientAddress
     }
     const title = sanitizeText(level.title);
     const author = sanitizeText(level.author || 'anonymous');
-    const record = { ...level, title, author, id, moves: moves.length, submittedAt: new Date().toISOString() };
+    const record = { ...level, title, author, id, moves: solved.moves.length, submittedAt: new Date().toISOString() };
 
     await env.lovebunny_levels.put(`community/${id}.json`, JSON.stringify(record), {
-        customMetadata: { title, author, moves: String(moves.length) }
+        customMetadata: { title, author, moves: String(solved.moves.length) }
     });
     await env.lovebunny_levels.put(`community/byhash/${hash}`, id);
     await env.SUBMIT_QUOTA.put(quotaKey, String(used + 1), { expirationTtl: 60 * 60 * 24 * 2 });
 
-    return json({ id, moves: moves.length }, { status: 201 });
+    return json({ id, moves: solved.moves.length }, { status: 201 });
 };

@@ -5,10 +5,10 @@
 
     export type SolveStatus =
         | { state: 'checking' }
-        | { state: 'solvable'; moves: MoveName[] }
+        | { state: 'solvable'; moves: MoveName[]; score: number }
         | { state: 'unsolvable' };
 
-    export type Tool = number | 'bunnyA' | 'bunnyB';
+    export type Tool = number | 'bunnyA' | 'bunnyB' | 'carrot';
 
     let {
         title = $bindable(),
@@ -50,7 +50,7 @@
 
 
     const TILE_SHEET_SIZE = { w: 320, h: 48 };
-    const CHAR_SHEET_SIZE = { w: 32, h: 48 };
+    const CHAR_SHEET_SIZE = { w: 32, h: 80 };
     const ICON_SCALE = 3;
 
     function iconStyle(
@@ -88,7 +88,12 @@
 
 
     <div class="swatches">
+        <div class="up-gradient">
+
+        </div>
+        
         {#each BRUSHES as brush (brush.tileId)}
+
             <div class="swatch-wrapper">
                 <Button
                     className={`${tool === brush.tileId ? "swatch selected" : "swatch"}`}
@@ -103,6 +108,19 @@
                 </div>
             </div>
         {/each}
+
+        <div class="swatch-wrapper">
+            <Button
+                className={`${tool === "carrot" ? "b-swatch selected" : "b-swatch"}`}
+                onclick={() => (tool = "carrot")}
+                overrideStyles
+            >
+                <span class="icon" style={iconStyle(characterSheet, CHAR_SHEET_SIZE, { x: 0, y: 4 })}></span>
+            </Button>
+            <div class="swatch-name">
+                carrot
+            </div>
+        </div>
 
         <div class="swatch-wrapper">
             <Button
@@ -130,6 +148,10 @@
                 <div class="swatch-name">
                     brown bunny
                 </div>
+        </div>
+
+        <div class="down-gradient">
+
         </div>
     </div>
 
@@ -162,7 +184,7 @@
     {#if solveStatus.state === "checking"}
         <div class={`checking ${statusHidden ? "hide" : ""}`}>solving...</div>
     {:else if solveStatus.state === "solvable"}
-        <div class={`solvable ${statusHidden ? "hide" : ""}`}>solvable in {solveStatus.moves.length} move{solveStatus.moves.length === 1 ? '' : 's'}</div>
+        <div class={`solvable ${statusHidden ? "hide" : ""}`}>solvable in {solveStatus.moves.length} move{solveStatus.moves.length === 1 ? '' : 's'} (score {solveStatus.score})</div>
     {:else}
         <div class={`unsolvable ${statusHidden ? "hide" : ""}`}>unsolvable!</div>
     {/if}
@@ -183,6 +205,10 @@
     {#if editorMode === "play"}
         <div class="moves">
             {game.moves.length} move{game.moves.length === 1 ? "" : "s"}
+        </div>
+
+        <div class="moves">
+            {game.getScore()} score
         </div>
     {/if}
 </section>
@@ -406,18 +432,36 @@
     .swatches-deck {
         position: absolute;
         right: 0;
-        padding: 8px;
+        padding-right: 8px;
         z-index: 99;
+
+        max-height: 500px;
+        overflow-y: auto;
+        overflow-x: hidden;
+
+        width: 220px;
+
+        display: flex;
+        justify-content: flex-end;
+
+        pointer-events: none;
+
+        &::-webkit-scrollbar {
+            display: none;
+        }
+
+        scrollbar-width: none;
     }
 
     
 
     .swatches {
-        max-height: 100vh;
         gap: 8px;
 
         display: flex;
         flex-direction: column;
+
+        pointer-events: auto;
 
         --w: 65px;
 
@@ -428,27 +472,28 @@
 
     :global(.swatch-wrapper) {
         display: flex;
+        position: relative;
         align-items: center;
         justify-content: center;
     }
 
     :global(.swatch-wrapper:hover) {
         .swatch-name {
-            margin-left: -200%;
+            margin-left: -150%;
             opacity: 1;
         }
     }
 
     :global(.swatch-wrapper:has(.swatch.selected)) {
         .swatch-name {
-            margin-left: -200%;
+            margin-left: -150%;
             opacity: 1;
         }
     }
 
     :global(.swatch-wrapper:has(.b-swatch.selected)) {
         .swatch-name {
-            margin-left: -200%;
+            margin-left: -150%;
             opacity: 1;
         }
     }
@@ -511,11 +556,32 @@
         font-family: "Halogen";
         color: #fff;
         pointer-events: none;
+        left: 0;
+        top: 36%;
         margin-left: 200%;
         opacity: 0;
         
         transition: margin 0.3s ease-in-out, opacity 0.3s ease-in-out;
 
+    }
+
+    .down-gradient, .up-gradient {
+        width: 100%;
+        aspect-ratio: 1 / 1;
+
+        position: sticky;
+        
+        z-index: 4;
+    }
+
+    .up-gradient {
+        top: 0;
+        background: linear-gradient(0deg, #ffffff00, var(--water-blue));
+    }
+
+    .down-gradient {
+        bottom: 0;
+        background: linear-gradient(180deg, #ffffff00, var(--water-blue));
     }
 
     :global(.selected) {

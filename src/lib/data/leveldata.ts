@@ -8,19 +8,13 @@ export interface LevelData {
     title: string;
     day: number;
     author: string;
+    carrots?: Position[];
 }
 
 export const MIN_BOARD_SIZE = 3;
 export const MAX_BOARD_SIZE = 20;
 
-/**
- * Daily levels are sometimes stored in R2 wrapped in a `{ date, level }`
- * envelope (e.g. when an object is uploaded straight from the Cloudflare
- * dashboard using the same shape the admin PUT endpoint accepts), rather
- * than as a bare LevelData object (the shape the admin endpoint actually
- * persists). Accept either shape so a stray envelope doesn't crash
- * mapToBoard with `board` being undefined.
- */
+
 export function normalizeLevelPayload(raw: unknown): LevelData {
     if (raw && typeof raw === 'object' && 'level' in raw && !('board' in raw)) {
         return (raw as { level: LevelData }).level;
@@ -61,7 +55,8 @@ export function cloneLevel(level: LevelData): LevelData {
         b: { ...level.b },
         title: level.title,
         day: level.day,
-        author: level.author
+        author: level.author,
+        carrots: level.carrots
     };
 }
 
@@ -117,6 +112,10 @@ function isPosition(value: unknown): value is Position {
     );
 }
 
+function isPositionWithinBounds(pos: Position, rows: number, cols: number): boolean {
+    return pos.x >= 0 && pos.x < cols && pos.y >= 0 && pos.y < rows;
+}
+
 export function parseLevel(json: string): LevelData {
     let data: unknown;
     try {
@@ -133,31 +132,57 @@ export function parseLevel(json: string): LevelData {
     const board = candidate.board;
 
     if (!Array.isArray(board) || board.length === 0 || !board.every((row) => Array.isArray(row))) {
-		throw new Error('Level is missing a valid board grid.');
-	}
- 
-	const cols = (board[0] as unknown[]).length;
-	if (cols === 0 || !board.every((row) => (row as unknown[]).length === cols)) {
-		throw new Error('Every board row must be the same length.');
-	}
- 
-	for (const row of board as number[][]) {
-		for (const tileId of row) {
-			if (typeof tileId !== 'number' || !VALID_TILE_IDS.has(tileId)) {
-				throw new Error(`Unknown tile id "${tileId}" in board.`);
-			}
-		}
-	}
- 
-	if (!isPosition(candidate.a)) throw new Error('Level is missing a valid bunny "a" position.');
-	if (!isPosition(candidate.b)) throw new Error('Level is missing a valid bunny "b" position.');
- 
-	return {
-		board: (board as number[][]).map((row) => [...row]),
-		a: { x: (candidate.a as Position).x, y: (candidate.a as Position).y },
-		b: { x: (candidate.b as Position).x, y: (candidate.b as Position).y },
-		title: typeof candidate.title === 'string' ? candidate.title : 'unnamed',
-		day: typeof candidate.day === 'number' ? candidate.day : -1,
-        author: typeof candidate.author === 'string' ? candidate.author : 'anonymous'
-	};
+        throw new Error('Level is missing a valid board grid.');
+    }
+
+    const rows = board.length;
+    const cols = (board[0] as unknown[]).length;
+    if (cols === 0 || !board.every((row) => (row as unknown[]).length === cols)) {
+        throw new Error('Every board row must be the same length.');
+    }
+
+    for (const row of board as number[][]) {
+        for (const tileId of row) {
+            if (typeof tileId !== 'number' || !VALID_TILE_IDS.has(tileId)) {
+                throw new Error(`Unknown tile id "${tileId}" in board.`);
+            }
+        }
+    }
+
+    if (!isPosition(candidate.a)) throw new Error('Level is missing a valid bunny "a" position.');
+    if (!isPositionWithinBounds(candidate.a, rows, cols)) {
+        throw new Error(`Bunny "a" position (${candidate.a.x}, ${candidate.a.y}) is out of board bounds.`);
+    }
+
+    if (!isPosition(candidate.b)) throw new Error('Level is missing a valid bunny "b" position.');
+    if (!isPositionWithinBounds(candidate.b, rows, cols)) {
+        throw new Error(`Bunny "b" position (${candidate.b.x}, ${candidate.b.y}) is out of board bounds.`);
+    }
+
+    let parsedCarrots: Position[] | undefined = undefined;
+    if ("carrots" in candidate && candidate.carrots !== undefined) {
+        if (!Array.isArray(candidate.carrots)) {
+            throw new Error('Level has an invalid carrots array.');
+        }
+
+        parsedCarrots = (candidate.carrots as unknown[]).map((carrot, idx) => {
+            if (!isPosition(carrot)) {
+                throw new Error(`Level's carrots array contains an invalid carrot at index ${idx}`);
+            }
+            if (!isPositionWithinBounds(carrot, rows, cols)) {
+                throw new Error(`Carrot at index ${idx} position (${carrot.x}, ${carrot.y}) is out of board bounds.`);
+            }
+            return { x: carrot.x, y: carrot.y };
+        });
+    }
+
+    return {
+        board: (board as number[][]).map((row) => [...row]),
+        a: { x: candidate.a.x, y: candidate.a.y },
+        b: { x: candidate.b.x, y: candidate.b.y },
+        title: typeof candidate.title === 'string' ? candidate.title : 'unnamed',
+        day: typeof candidate.day === 'number' ? candidate.day : -1,
+        author: typeof candidate.author === 'string' ? candidate.author : 'anonymous',
+        carrots: parsedCarrots
+    };
 }

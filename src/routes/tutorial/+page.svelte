@@ -4,7 +4,7 @@
     import cs from "$lib/assets/sprites/charactersheet.png";
     import { Game, MOVE_DICT, type GameParams, type MoveName } from "$lib/state/game/game.svelte";
     import { T1_DIALOGUE, T1_GAME } from "$lib/levels/tutorial_1";
-    import { onMount } from "svelte";
+    import { getContext, onMount } from "svelte";
 
     import wave from "$lib/assets/images/wave.gif";
     import Button from "$lib/components/util/button.svelte";
@@ -18,6 +18,7 @@
     import { T3_DIALOGUE, T3_GAME } from "$lib/levels/tutorial_3";
     import { goto } from "$app/navigation";
     import MobileDeck from "$lib/components/game/mobileDeck.svelte";
+    import { T4_DIALOGUE, T4_GAME } from "$lib/levels/tutorial_4";
 
 
     let tileSheet = $state<HTMLImageElement>();
@@ -78,7 +79,12 @@
         {
             dialogue: T3_DIALOGUE,
             game: T3_GAME
+        },
+        {
+            dialogue: T4_DIALOGUE,
+            game: T4_GAME
         }
+        
     ]
 
     $effect(() => {
@@ -205,12 +211,21 @@
                 {game}
                 {tileSheet}
                 {characterSheet}
+                isTuye={getContext('isTuye')}
             />
         {/if}
         <div class="game-info">
-            <div class="moves">moves: {moves.length}</div>
+            <div class="moves">score: {game.getScore()}</div>
 
             <div class="button-dock">
+                <Button
+                    onclick={() => game.undo()}
+                    style="background-color: var(--carrot-orange);"
+                    disabled={game.undone || !game.lastMove}
+                >
+                    ↩
+                </Button>
+                
                 <Button 
                     onclick={reset}
                     style="background-color: #c20202;"

@@ -1,6 +1,6 @@
 import { type Position, type Move, type Tile, mapToBoard, BOARD_BORDER, type Direction } from "$lib/state/tile/tiles";
-import { type Entity } from "../entity/entity";
-import { solveLevel } from "./solver";
+import { CarrotEntity, type Entity } from "../entity/entity";
+import { solveLevelAsync, SCORE_PER_CARROT, type SolveResult } from "./solver";
 
 export type MoveName = "up" | "down" | "left" | "right";
 export type GameStatus = 'playing' | 'won' | 'menu' | 'playback';
@@ -17,17 +17,18 @@ export type EditorMode = "edit" | "play";
 export type GameParams = ConstructorParameters<typeof Game>;
 export class Game {
     public board = $state<Tile[][]>([]);
-    public a = $state<Entity>({ id: 'bunny_a', pos: { x: 1, y: 1 }, facing: 'right' });
-    public b = $state<Entity>({ id: 'bunny_b', pos: { x: 6, y: 5 }, facing: 'right' });
-    public hearts = $state<Entity>({ id: 'hearts', pos: { x: 1, y: 1 }, facing: 'right' });
+    public a = $state<Entity>({ id: 'bunny_a', pos: { x: 1, y: 1 }, facing: 'right', alive: true });
+    public b = $state<Entity>({ id: 'bunny_b', pos: { x: 6, y: 5 }, facing: 'right', alive: true });
+    public hearts = $state<Entity>({ id: 'hearts', pos: { x: 1, y: 1 }, facing: 'right', alive: true });
     public status = $state<GameStatus>('menu');
-    public carrotScore = $state<number>(0);
     public moves = $state<MoveName[]>([]);
-    public solution = $state<MoveName[] | null>(null);
+    public solution = $state<SolveResult | null>(null);
     public lastMove = $state<MoveName>();
     public undone = $state<boolean>(false);
 
-    public static SCORE_PER_CARROT = 5;
+    public static SCORE_PER_CARROT = SCORE_PER_CARROT;
+    public carrotScore = $state<number>(0);
+    public carrots = $state<CarrotEntity[]>([]);
 
     constructor(
         initBoard: number[][],
@@ -35,21 +36,46 @@ export class Game {
         b: Position,
         public readonly title: string,
         public readonly day: number,
-        public readonly author: string
+        public readonly author: string,
+        carrotPositions?: Position[]
     ) {
         this.board = mapToBoard(initBoard);
 
         this.a.pos = { x: a.x + BOARD_BORDER, y: a.y + BOARD_BORDER };
         this.b.pos = { x: b.x + BOARD_BORDER, y: b.y + BOARD_BORDER };
-        this.solution = solveLevel(initBoard, a, b);
 
-        if (!this.solution) {
-            console.error("Level is unsolvable.");
+        solveLevelAsync(initBoard, a, b, carrotPositions).result.then((solution) => {
+            this.solution = solution;
+        });
+
+        if (carrotPositions) {
+            carrotPositions.forEach((pos: Position, idx: number) => {
+                this.carrots.push(
+                    new CarrotEntity(idx, "carrot", { x: pos.x + BOARD_BORDER, y: pos.y + BOARD_BORDER }, "right", true, true)
+                );
+            });
+        }
+    }
+
+    public getScore(): number {
+        return this.moves.length - (this.carrotScore * SCORE_PER_CARROT);
+    }
+
+    public consumeCarrot(iid: number) {
+        const foundCarrot = this.carrots.findIndex((item: CarrotEntity) => item.iid === iid);
+        if (foundCarrot === -1) {
+            throw new Error("consumeCarrot: Invalid instance id");
         }
 
-        $effect(() => {
+        this.carrotScore++;
+        this.carrots.splice(foundCarrot, 1);
+    }
 
-        });
+    private checkCarrotPickup(entity: Entity) {
+        const carrot = this.carrots.find(
+            (c) => c.pos.x === entity.pos.x && c.pos.y === entity.pos.y
+        );
+        carrot?.effectorEnter?.(this);
     }
 
     public move(dx: Move, dy: Move) {
@@ -66,6 +92,9 @@ export class Game {
 
         this.moveEntity(this.a, dx, dy);
         this.moveEntity(this.b, -dx as Move, -dy as Move);
+
+        this.checkCarrotPickup(this.a);
+        this.checkCarrotPickup(this.b);
 
         this.hearts.pos = { x: (this.a.pos.x + this.b.pos.x) / 2, y: (this.a.pos.y + this.b.pos.y) / 2 };
 

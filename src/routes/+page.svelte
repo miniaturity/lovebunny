@@ -3,7 +3,7 @@
     import ts from "$lib/assets/sprites/spritesheet.png";
     import cs from "$lib/assets/sprites/charactersheet.png";
     import { Game, MOVE_DICT, type GameParams, type MoveName } from "$lib/state/game/game.svelte.js";
-    import { onMount } from "svelte";
+    import { getContext, onMount } from "svelte";
     import { hasVisited, hasCompletedTip } from "$lib/state/store";
     import Modal from "$lib/components/util/modal.svelte";
 
@@ -289,6 +289,8 @@
         }
     });
 
+    let scoreMode = $state<boolean>(true);
+
 </script>
 
 <svelte:head>
@@ -443,11 +445,18 @@
                 {tileSheet} 
                 {characterSheet} 
                 {loaded}
+                isTuye={getContext('isTuye')}
             />
         {/if}
         <div class="game-info">
             <div class="moves">
-                moves: {moves.length}
+                <button class="score" onclick={() => scoreMode = !scoreMode}>
+                    {#if scoreMode}
+                        score: {game.getScore()}
+                    {:else}
+                        moves: {game.moves.length}
+                    {/if}
+                </button>
                 {#if bestGame.moves.length !== 0} 
                     <button class="best" onclick={setToBest}>best: {bestGame.moves.length} {"<"}</button>
                 {/if}
@@ -510,7 +519,10 @@
         overflow-x: hidden;
     }
 
-    
+    .score {
+        border: none;
+        background: transparent;
+    }
 
     .nav {
         position: absolute;
@@ -680,6 +692,13 @@
         @media screen and (max-width: 768px) {
             margin-bottom: 10vh;
         }
+    }
+
+    .score {
+        font-family: "Halogen";
+        color: #fff;
+        font-size: 1.5rem;
+        cursor: pointer;
     }
 
     .game-info {

@@ -2,6 +2,7 @@
     import type { Game, MoveName } from "$lib/state/game/game.svelte";
     import Button from "./button.svelte";
     import Histograph from "../game/histogram.svelte";
+    import { getContext } from "svelte";
 
     let { game, playback, distribution, totalPlayers, id, isUserMade = false }: {
         game: Game;
@@ -11,6 +12,8 @@
         distribution?: Record<string, number>;
         totalPlayers?: number;
     } = $props();
+
+    const isTuye = getContext('isTuye');
 
     let shareStatus = $state<"success" | "fail" | null>(null);
     let playerScore = $derived(game.moves.length);
@@ -66,8 +69,7 @@
 `${!isUserMade ? `day ${game.day}` : `user level`} - "${game.title}" by ${game.author}
 
 ${"🥕".repeat(getCarrotCount())}
-${game.moves.length === game.solution.length ? `\n🐰 PERFECT game!\n` : ""}
-earned ${getCarrotCount()}/5 carrots
+${isTuye ? "\n🌈 TUYE mode active" : ""} ${game.moves.length === game.solution.moves.length ? `\n🐰 PERFECT game!\n` : ""}
 ${!isUserMade && percentile ? `placed ${percentile.direction === "top" ? "top" : "bottom"} ${percentile.percent}% of ${totalPlayers} 🐇` : ``}
 bunniesin.love${isUserMade ? `/levels/${id}` : ``}  `;
 
@@ -85,7 +87,7 @@ bunniesin.love${isUserMade ? `/levels/${id}` : ``}  `;
         let carrotCount = 1;
 
         const yourMoves = game.moves.length;
-        const solution = game.solution.length;
+        const solution = game.solution.moves.length;
 
         if (yourMoves <= solution + 10) carrotCount = 2;
         if (yourMoves <= solution + 5) carrotCount = 3;
@@ -121,18 +123,18 @@ bunniesin.love${isUserMade ? `/levels/${id}` : ``}  `;
         <div class="bottom">
             {#if distribution}
                 <div class="graph">
-                    <Histograph {distribution} optimal={game.solution?.length ?? 0} {playerScore} />
+                    <Histograph {distribution} optimal={game.solution?.moves.length ?? 0} {playerScore} />
                 </div>
             {/if}
         </div>
     {:else}
         <div class="score">
-            optimal: {game.solution?.length ?? 0} moves
+            optimal: {game.solution?.moves.length ?? 0} moves
         </div>
     {/if}
 
     <div class="button-deck">
-        <Button onclick={() => playback(game.solution!)}>
+        <Button onclick={() => playback(game.solution!.moves)}>
             Play Optimal
         </Button>
 

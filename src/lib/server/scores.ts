@@ -1,5 +1,6 @@
 import { Game, MOVE_DICT, type MoveName } from '$lib/state/game/game.svelte';
 import type { LevelData } from '$lib/data/leveldata';
+import { solveLevel } from '$lib/state/game/solver';
 
 export interface ScoreRecord {
     playerId: string;
@@ -32,17 +33,18 @@ export async function submitDailyScore(
 }
 
 export function verifySolution(level: LevelData, moves: MoveName[]): boolean {
-    const game = new Game(level.board, level.a, level.b, level.title, level.day, level.author);
+    const game = new Game(level.board, level.a, level.b, level.title, level.day, level.author, level.carrots);
     game.status = 'playing';
+    game.solution = solveLevel(level.board, level.a, level.b, level.carrots); 
 
     for (const move of moves) {
         const vector = MOVE_DICT[move];
         if (!vector) return false;
-        game.move(vector.x, vector.y); 
+        game.move(vector.x, vector.y);
     }
 
     // @ts-ignore
-    // game.move can change game.status
+    // game.move changes game.status
     return game.status === 'won';
 }
 

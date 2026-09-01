@@ -46,37 +46,17 @@ export const T3_DIALOGUE: DialogueTree = {
     onWin: {
         id: "onWin",
         expression: "happy.png",
-        text: "wow! you're ready to play now :3! the optimal solution was 10 moves!",
+        text: "wow! that was pretty good! the optimal solution was 10 moves.",
         pausePoints: [
             {
                 index: 4,
                 ms: 500
             },
             {
-                index: 33,
+                index: 26,
                 continue: true
             }
         ],
         name: "mini",
-        next: "editor"
     },
-
-    editor: {
-        id: "editor",
-        name: "mini",
-        expression: "neutral.png",
-        text: "P.S. there is a level editor! make and share your custom-made levels! click the top-left wrench icon.",
-        pausePoints: [
-            {
-                index: 29,
-                ms: 500,
-                expression: "happy.png"
-            },
-            {
-                index: 69,
-                ms: 500,
-                expression: "neutral.png"
-            }
-        ]
-    }
 }

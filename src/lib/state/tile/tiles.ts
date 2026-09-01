@@ -5,7 +5,6 @@ import { Tile, type Position, StaticTile } from '../tile/tile';
 
 export type Move = -1 | 0 | 1;
 
-// Re-exported so existing imports of Tile/Position/Entity from './tiles' keep working.
 export { Tile };
 export type { Position };
 
@@ -265,7 +264,7 @@ export class Wall extends StaticTile {
 
 
 
-const TileRegistry: Record<number, () => Tile> = {
+export const TileRegistry: Record<number, () => Tile> = {
     0: () => new Water(), // water
     1: () => new Ground(0), // ground (default)
     2: () => new GroundGrass(1), // ground (animated grass)

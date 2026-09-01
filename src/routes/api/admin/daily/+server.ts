@@ -14,12 +14,12 @@ export const PUT: RequestHandler = async ({ request, platform }) => {
     const { level, error: validationError } = validateLevelPayload(body.level);
     if (validationError || !level) throw error(400, validationError ?? 'Invalid level');
 
-    const moves = solveLevel(level.board, level.a, level.b);
-    if (!moves) throw error(422, 'Level is not solvable');
+    const solved = solveLevel(level.board, level.a, level.b, level.carrots);
+    if (!solved) throw error(422, 'Level is not solvable');
 
     const payload = JSON.stringify(level);
     await env.lovebunny_levels.put(`daily/${body.date}.json`, payload);
     await env.lovebunny_levels.put('daily/latest.json', payload);
 
-    return json({ ok: true, date: body.date, moves: moves.length });
+    return json({ ok: true, date: body.date, moves: solved.moves.length });
 };

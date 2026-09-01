@@ -1,105 +1,80 @@
-import { type MoveName } from "./game.svelte";
-import { mapToBoard, BOARD_BORDER, type Position, type Move } from "../tile/tiles";
+import { type MoveName } from "$lib/state/game/game.svelte";
+import type { Position } from "../tile/tiles";
+import { solveLevelCore, SCORE_PER_CARROT, type SolveResult } from "./solver-core";
+import type { SolverWorkerRequest, SolverWorkerResponse } from "./solver.worker-types";
 
+export { SCORE_PER_CARROT };
+export type { SolveResult };
 
-const MOVE_VECTORS: Record<MoveName, { x: Move, y: Move }> = {
-    up: { x: 0, y: -1 },
-    down: { x: 0, y: 1 },
-    left: { x: -1, y: 0 },
-    right: { x: 1, y: 0 } 
-}
-
-const ALL_MOVES: MoveName[] = ["up", "down", "right", "left"];
-
-interface SolverState {
-    ax: number;
-    ay: number;
-    bx: number;
-    by: number;
-}
-
-function stateKey(s: SolverState): string {
-    return `${s.ax},${s.ay},${s.bx},${s.by}`;
-}
-
-function isWon(s: SolverState): boolean {
-    return Math.abs(s.ax - s.bx) + Math.abs(s.ay - s.by) === 1;
-}
-
-// BFS algorithm to find optimal solution
+/**
+ * Synchronous solve, using A* over the (positions + carrot mask) state space.
+ * 
+ * For where Web Workers aren't available
+ */
 export function solveLevel(
     map: number[][],
     startA: Position,
-    startB: Position
-): MoveName[] | null {
-    const board = mapToBoard(map);
+    startB: Position,
+    carrotPositions?: Position[]
+): SolveResult | null {
+    return solveLevelCore(map, startA, startB, carrotPositions);
+}
 
-    const isPassible = (x: number, y: number): boolean => {
-        if (y < 0 || y >= board.length || x < 0 || x >= board[0].length) return false;
-        return board[y][x].isPassable;
+// Web Worker
+//
+// One worker is created lazily and reused for every solve, rather than
+// spinning up a fresh thread per call. Each request gets an id so stale
+// responses (from a solve that's since been superseded, e.g. the editor
+// re-solving as the user paints) can be matched up or ignored.
+
+let worker: Worker | null = null;
+let nextRequestId = 0;
+const pending = new Map<number, (result: SolveResult | null) => void>();
+
+function getWorker(): Worker {
+    if (!worker) {
+        worker = new Worker(new URL("./solver.worker.ts", import.meta.url), { type: "module" });
+        worker.onmessage = (event: MessageEvent<SolverWorkerResponse>) => {
+            const { id, result } = event.data;
+            const resolve = pending.get(id);
+            if (!resolve) return; // cancelled or already handled
+            pending.delete(id);
+            resolve(result);
+        };
     }
+    return worker;
+}
 
-    const initial: SolverState = {
-        ax: startA.x + BOARD_BORDER,
-        ay: startA.y + BOARD_BORDER,
-        bx: startB.x + BOARD_BORDER,
-        by: startB.y + BOARD_BORDER
+export interface SolveHandle {
+    result: Promise<SolveResult | null>;
+    cancel: () => void;
+}
+
+/**
+ * Solve a level off the main thread via a Web Worker, so the UI stays responsive
+ * during solving.
+ */
+export function solveLevelAsync(
+    map: number[][],
+    startA: Position,
+    startB: Position,
+    carrotPositions?: Position[]
+): SolveHandle {
+    if (typeof Worker === "undefined") {
+        return {
+            result: Promise.resolve(solveLevelCore(map, startA, startB, carrotPositions)),
+            cancel: () => {}
+        };
     }
-
-    if (isWon(initial)) return [];
-
-    const initialKey = stateKey(initial);
-    const visited = new Set<string>([initialKey]);
-    const queue: SolverState[] = [initial];
-    const cameFrom = new Map<string, { prev: string; move: MoveName }>();
-
-    let head = 0;
-    while (head < queue.length) {
-        const current = queue[head++];
-        const currentKey = stateKey(current);
-
-        for (const moveName of ALL_MOVES) {
-            const { x: dx, y: dy } = MOVE_VECTORS[moveName];
-
-            let ax = current.ax;
-            let ay = current.ay;
-            const nextAx = ax + dx;
-            const nextAy = ay + dy;
-            if (isPassible(nextAx, nextAy) && !(nextAx === current.bx && nextAy === current.by)) {
-                ax = nextAx;
-                ay = nextAy; 
-            }
-
-            let bx = current.bx;
-            let by = current.by;
-            const nextBx = bx - dx;
-            const nextBy = by - dy;
-            if (isPassible(nextBx, nextBy) && !(nextBx === ax && nextBy === ay)) {
-                bx = nextBx;
-                by = nextBy;
-            }
-
-            const next: SolverState = { ax, ay, bx, by };
-            const nextKey = stateKey(next);
-            if (visited.has(nextKey)) continue;
-
-            visited.add(nextKey);
-            cameFrom.set(nextKey, { prev: currentKey, move: moveName });
-
-            if (isWon(next)) {
-                const moves: MoveName[] = [moveName];
-                let key = currentKey;
-                while (key !== initialKey) {
-                    const step = cameFrom.get(key)!;
-                    moves.unshift(step.move);
-                    key = step.prev;
-                }
-                return moves;
-            }
-
-            queue.push(next);
-        }
-    }
-
-    return null;
+ 
+    const id = nextRequestId++;
+    const result = new Promise<SolveResult | null>((resolve) => {
+        pending.set(id, resolve);
+        const request: SolverWorkerRequest = JSON.parse(
+            JSON.stringify({ id, map, startA, startB, carrotPositions })
+        );
+        getWorker().postMessage(request);
+    });
+ 
+    return { result, cancel: () => pending.delete(id) };
 }
