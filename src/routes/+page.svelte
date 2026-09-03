@@ -242,8 +242,21 @@
         const target = shiftDate(today, -1);
         try {
             await goto(`/?date=${target}`);
-            game = new Game(...gameParams);
-            game.status = 'playing';
+
+            fetchMyScore(today).then(async (existing) => {
+                if (existing) {
+                    alreadyPlayedToday = true;
+                    scoreSubmitted = true; 
+                    loaded = true;
+                    await replayLockedSolution(existing.moves);
+                    loadDistribution();
+                } else {
+                    loaded = true;
+                }
+
+                game.moves = existing?.moves ?? [];
+            });
+            
         } catch (err) {
             console.error(err);
             goto("/");
@@ -256,8 +269,21 @@
         const target = shiftDate(today, 1);
         try {
             await goto(`/?date=${target}`);
-            game = new Game(...gameParams);
-            game.status = 'playing';
+
+            fetchMyScore(today).then(async (existing) => {
+                if (existing) {
+                    alreadyPlayedToday = true;
+                    scoreSubmitted = true; 
+                    loaded = true;
+                    await replayLockedSolution(existing.moves);
+                    loadDistribution();
+                } else {
+                    loaded = true;
+                }
+
+                game.moves = existing?.moves ?? [];
+            });
+            
         } catch (err) {
             console.error(err);
             goto("/");
