@@ -28,7 +28,10 @@
         game,
         publishLevel,
         onClear,
-        playback
+        playback,
+        undo,
+        redo,
+        playbackGame
     }: {
         title: string;
         author: string;
@@ -48,6 +51,9 @@
         publishLevel: () => void;
         onClear: () => void;
         playback: (moves: MoveName[]) => Promise<void>;
+        undo: () => void;
+        redo: () => void;
+        playbackGame: Game
     } = $props();
 
 
@@ -191,7 +197,7 @@
         <div class={`unsolvable ${statusHidden ? "hide" : ""}`}>unsolvable!</div>
     {/if}
 
-    <Button disabled={solveStatus.state === "unsolvable" || solveStatus.state === "checking"} style={`background-color: ${editorMode === "play" ? "var(--carrot-orange)" : "var(--grass-green)"}`} onclick={() => editorMode = editorMode === "edit" ? "play" : "edit"}>
+    <Button disabled={solveStatus.state === "unsolvable" || solveStatus.state === "checking" || game.status === "playback"} style={`background-color: ${editorMode === "play" ? "var(--carrot-orange)" : "var(--grass-green)"}`} onclick={() => editorMode = editorMode === "edit" ? "play" : "edit"}>
         {editorMode === "edit" ? "Play" : "Edit"}
     </Button>
 
@@ -215,11 +221,11 @@
         </Button>
 
         <div class="moves">
-            {game.moves.length} move{game.moves.length === 1 ? "" : "s"}
+            {game.status === "playback" ? playbackGame.moves.length : game.moves.length} move{game.moves.length === 1 ? "" : "s"}
         </div>
 
         <div class="moves">
-            {game.getScore()} score
+            {game.status === "playback" ? playbackGame.getScore() : game.getScore()} score
         </div>
     {/if}
 </section>
@@ -270,7 +276,33 @@
     </label>
 </section>
 
+<section class="ur-deck">
+    <Button
+        onclick={undo}
+        style="background-color: #fff; color: #000"
+    >
+        undo
+    </Button>
+    <Button
+        onclick={redo}
+        style="background-color: #fff; color: #000"
+    >
+        redo
+    </Button>
+</section>
+
 <style lang="scss">
+
+    .ur-deck {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        padding: 8px;
+        gap: 8px;
+        
+        display: flex;
+        flex-direction: row;
+    }
     .meta-deck {
         display: flex;
         flex-direction: column;

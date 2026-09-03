@@ -355,6 +355,7 @@
             playmove(moves[i]);
         }
 
+        await sleep(1000);
         game.status = "playing";
     }   
     
@@ -564,7 +565,8 @@
             {game}
             publishLevel={onUpload}
             onClear={() => showClearWarningModal = true}
-            {playback}
+            {playback} {playbackGame}
+            {undo} {redo}
         />
     {/if}
 

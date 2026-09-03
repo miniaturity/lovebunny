@@ -242,6 +242,8 @@
         const target = shiftDate(today, -1);
         try {
             await goto(`/?date=${target}`);
+            game = new Game(...gameParams);
+            game.status = 'playing';
         } catch (err) {
             console.error(err);
             goto("/");
@@ -254,6 +256,8 @@
         const target = shiftDate(today, 1);
         try {
             await goto(`/?date=${target}`);
+            game = new Game(...gameParams);
+            game.status = 'playing';
         } catch (err) {
             console.error(err);
             goto("/");
