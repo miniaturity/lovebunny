@@ -42,7 +42,10 @@ export const load: PageServerLoad = async (
         obj = await bucket.get(`daily/${targetDate}.json`);
     }
 
-    if (!obj) throw error(404, `Daily level for ${targetDate} not found.`);
+    if (!obj) {
+        obj = await bucket.get('daily/latest.json');
+        if (!obj) throw error(404, "Fallback level is currently unassigned.");
+    }
 
     const daily = normalizeLevelPayload(await obj.json<unknown>());
     if (!daily?.board) throw error(500, 'Stored daily level is malformed');
