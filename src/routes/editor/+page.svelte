@@ -19,7 +19,7 @@
         MAX_BOARD_SIZE
     } from "$lib/data/leveldata";
     import Board from "$lib/components/game/board.svelte";
-    import { Game, type EditorMode } from "$lib/state/game/game.svelte";
+    import { Game, type GameParams, MOVE_DICT, type EditorMode, type MoveName } from "$lib/state/game/game.svelte";
     import { publishLevel } from "$lib/api/levels";
     import Modal from "$lib/components/util/modal.svelte";
     import { editorLevel } from "$lib/state/store";
@@ -336,6 +336,32 @@
         if (KEYBINDS[keybind])
             KEYBINDS[keybind]();
     }
+
+    
+    let gameParams = $derived<GameParams>([level.board, level.a, level.b, level.title, level.day, level.author, level.carrots]);
+    let playbackGame = $derived<Game>(new Game(...gameParams));
+
+    const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    async function playback(moves: MoveName[]) {
+        if (editorMode !== "play" || game.status === "playback") return;
+
+        game.status = "playback";
+        playbackGame = new Game(...gameParams);
+        playbackGame.status = "playback";
+
+        for (let i = 0; i < moves.length; i++) {
+            await sleep(250);
+            playmove(moves[i]);
+        }
+
+        game.status = "playing";
+    }   
+    
+    function playmove(move: MoveName) {
+        const { x, y } = MOVE_DICT[move];
+        playbackGame.move(x, y);
+    }
 </script>
 
 <svelte:head>
@@ -509,7 +535,7 @@
                 />
             {:else if tileSheet && characterSheet}
                 <Board 
-                    {game}
+                    game={game.status === "playback" ? playbackGame : game}
                     {tileSheet}
                     {characterSheet}
                     loaded
@@ -538,6 +564,7 @@
             {game}
             publishLevel={onUpload}
             onClear={() => showClearWarningModal = true}
+            {playback}
         />
     {/if}
 

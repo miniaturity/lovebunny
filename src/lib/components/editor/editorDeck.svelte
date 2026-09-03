@@ -28,6 +28,7 @@
         game,
         publishLevel,
         onClear,
+        playback
     }: {
         title: string;
         author: string;
@@ -46,6 +47,7 @@
         game: Game;
         publishLevel: () => void;
         onClear: () => void;
+        playback: (moves: MoveName[]) => Promise<void>;
     } = $props();
 
 
@@ -203,6 +205,15 @@
     {/if}
     
     {#if editorMode === "play"}
+        <Button 
+            disabled={solveStatus.state === "unsolvable" || solveStatus.state === "checking" || game.status === "playback"}
+            onclick={async () => {
+                await playback(game.solution?.moves || []);
+            } }
+        >
+            Solution
+        </Button>
+
         <div class="moves">
             {game.moves.length} move{game.moves.length === 1 ? "" : "s"}
         </div>
@@ -262,7 +273,7 @@
 <style lang="scss">
     .meta-deck {
         display: flex;
-        flex-direction: row;
+        flex-direction: column;
         gap: 8px;
 
         position: absolute;
@@ -291,7 +302,7 @@
     }
 
     .meta-input {
-        width: 140px;
+        flex-grow: 1;
         padding: 8px;
         border: none;
         outline: none;

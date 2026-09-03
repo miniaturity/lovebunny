@@ -145,12 +145,21 @@
 
     });
 
+    let submittingScore = $state(false);
+
     $effect(() => {
-        if (game.status === "won" && !scoreSubmitted && confirmedSubmission) {
-            scoreSubmitted = true;
-            console.log(today);
+        if (game.status === "won" && !scoreSubmitted && !submittingScore && confirmedSubmission) {
+            submittingScore = true;
             submitScore(today, game.moves).then((result) => {
-                if (result.ok) loadDistribution();
+                submittingScore = false;
+
+                if (result.ok || result.alreadyPlayed) {
+                    scoreSubmitted = true;
+                    loadDistribution();
+                } else {
+                    confirmedSubmission = false;
+                    alert("Couldn't submit your score. Don't try to cheat!");
+                }
             });
         }
     });

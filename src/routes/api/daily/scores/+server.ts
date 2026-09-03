@@ -22,11 +22,16 @@ async function loadTodaysLevel(bucket: R2Bucket, date: string) {
 	return daily;
 }
 
-export const GET: RequestHandler = async ({ platform }) => {
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+export const GET: RequestHandler = async ({ platform, url }) => {
 	const bucket = platform?.env.lovebunny_levels;
 	if (!bucket) throw error(500, 'Level storage is not configured');
 
-	const date = new Date().toISOString().slice(0, 10);
+	const requestedDate = url.searchParams.get('date');
+	const date =
+		requestedDate && DATE_RE.test(requestedDate) ? requestedDate : new Date().toISOString().slice(0, 10);
+
 	const distribution = await getDailyScoreDistribution(bucket, date);
 
 	return json(distribution, { headers: { 'cache-control': 'public, max-age=60' } });

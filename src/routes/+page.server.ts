@@ -26,9 +26,11 @@ export const load: PageServerLoad = async (
     const requestedDate = url.searchParams.get('date');
 
     let targetDate: string;
+    let obj: R2ObjectBody | null;
 
     if (requestedDate === null) {
-        targetDate = 'latest';
+        targetDate = serverToday;
+        obj = (await bucket.get(`daily/${targetDate}.json`)) ?? (await bucket.get('daily/latest.json'));
     } else {
         const normalized = parseStrictUTCDate(requestedDate);
 
@@ -37,9 +39,9 @@ export const load: PageServerLoad = async (
         }
 
         targetDate = normalized;
+        obj = await bucket.get(`daily/${targetDate}.json`);
     }
 
-    const obj = (await bucket.get(`daily/${targetDate}.json`));
     if (!obj) throw error(404, `Daily level for ${targetDate} not found.`);
 
     const daily = normalizeLevelPayload(await obj.json<unknown>());
@@ -47,7 +49,7 @@ export const load: PageServerLoad = async (
 
     return {
         daily,
-        today: targetDate === 'latest' ? serverToday : targetDate,
+        today: targetDate,
         serverToday
     };
 };
