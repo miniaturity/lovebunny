@@ -475,7 +475,7 @@
                 <Button
                     onclick={() => game.undo()}
                     style="background-color: var(--carrot-orange);"
-                    disabled={game.undone || !game.lastMove}
+                    disabled={game.undone || game.history.length === 0}
                 >
                     ↩
                 </Button>

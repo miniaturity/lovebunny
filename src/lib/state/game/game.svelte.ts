@@ -13,6 +13,17 @@ export const MOVE_DICT: Record<MoveName, { x: Move, y: Move }> = {
     "left": { x: -1, y: 0 }
 }
 
+interface GameSnapshot {
+    a: Entity;
+    b: Entity;
+    hearts: Entity;
+    moves: MoveName[];
+    carrots: CarrotEntity[];
+    carrotScore: number;
+    lastMove: MoveName | undefined;
+    status: GameStatus;
+}
+
 export type EditorMode = "edit" | "play";
 export type GameParams = ConstructorParameters<typeof Game>;
 export class Game {
@@ -25,6 +36,9 @@ export class Game {
     public solution = $state<SolveResult | null>(null);
     public lastMove = $state<MoveName>();
     public undone = $state<boolean>(false);
+
+    private _history: GameSnapshot[] = [];
+    get history() { return this._history; }
 
     public static SCORE_PER_CARROT = SCORE_PER_CARROT;
     public carrotScore = $state<number>(0);
@@ -78,9 +92,33 @@ export class Game {
         carrot?.effectorEnter?.(this);
     }
 
+    private cloneEntity(e: Entity): Entity {
+        return { ...e, pos: { ...e.pos } };
+    }
+
+    private cloneCarrots(carrots: CarrotEntity[]): CarrotEntity[] {
+        return carrots.map(
+            (c) => new CarrotEntity(c.iid, c.id, { ...c.pos }, c.facing, c.alive, c.isEffector)
+        );
+    }
+
+    private pushSnapshot() {
+        this._history.push({
+            a: this.cloneEntity(this.a),
+            b: this.cloneEntity(this.b),
+            hearts: this.cloneEntity(this.hearts),
+            moves: [...this.moves],
+            carrots: this.cloneCarrots(this.carrots),
+            carrotScore: this.carrotScore,
+            lastMove: this.lastMove,
+            status: this.status
+        });
+    }
+
     public move(dx: Move, dy: Move) {
         if ((this.status !== 'playing' && this.status !== "playback") || !this.solution) return;
 
+        this.pushSnapshot();
 
         this.undone = false;
         const direction = this.getDirection(dx, dy);
@@ -126,28 +164,18 @@ export class Game {
     public undo() {
         if (this.undone || !this.lastMove || this.status !== "playing") return;
 
-        switch (this.lastMove) {
-            case "up":
-                this.moveEntity(this.a, MOVE_DICT["down"].x, MOVE_DICT["down"].y);
-                this.moveEntity(this.b, -MOVE_DICT["down"].x as Move, -MOVE_DICT["down"].y as Move);
-                break;
-            case "down":
-                this.moveEntity(this.a, MOVE_DICT["up"].x, MOVE_DICT["up"].y);
-                this.moveEntity(this.b, -MOVE_DICT["up"].x as Move, -MOVE_DICT["up"].y as Move);
-                break;
-            case "left":
-                this.moveEntity(this.a, MOVE_DICT["right"].x, MOVE_DICT["right"].y);
-                this.moveEntity(this.b, -MOVE_DICT["right"].x as Move, -MOVE_DICT["right"].y as Move);
-                break;
-            case "right":
-                this.moveEntity(this.a, MOVE_DICT["left"].x, MOVE_DICT["left"].y);
-                this.moveEntity(this.b, -MOVE_DICT["left"].x as Move, -MOVE_DICT["left"].y as Move);
-                break;
-            default:
-                break;
-        }
+        const snapshot = this._history.pop();
+        if (!snapshot) return;
 
-        this.moves.pop();
+        this.a = snapshot.a;
+        this.b = snapshot.b;
+        this.hearts = snapshot.hearts;
+        this.moves = snapshot.moves;
+        this.carrots = snapshot.carrots;
+        this.carrotScore = snapshot.carrotScore;
+        this.lastMove = snapshot.lastMove;
+        this.status = snapshot.status;
+
         this.triggerGlobalOnMove();
         this.undone = true;
     }
@@ -197,4 +225,3 @@ export class Game {
         return null;
     }
 }
-
