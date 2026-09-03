@@ -37,7 +37,7 @@ export class Game {
     public lastMove = $state<MoveName>();
     public undone = $state<boolean>(false);
 
-    private _history: GameSnapshot[] = [];
+    private _history = $state<GameSnapshot[]>([]);
     get history() { return this._history; }
 
     public static SCORE_PER_CARROT = SCORE_PER_CARROT;
