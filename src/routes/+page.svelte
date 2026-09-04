@@ -232,10 +232,10 @@
         return new Date(t + deltaDays * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
     }
 
-    let canGoNext = $derived(today < data.serverToday);
+    let canGoNext = $derived(today < data.serverToday || game.status !== "playback");
 
     async function lastDay() {
-        if (game.day === 1) return;
+        if (game.day === 1 || !canGoNext) return;
 
         const target = shiftDate(today, -1);
         try {
@@ -249,7 +249,10 @@
                     await replayLockedSolution(existing.moves);
                     loadDistribution();
                 } else {
+                    alreadyPlayedToday = false;
+                    scoreSubmitted = false;
                     loaded = true;
+                    game.status = "playing";
                 }
 
                 game.moves = existing?.moves ?? [];
@@ -276,7 +279,10 @@
                     await replayLockedSolution(existing.moves);
                     loadDistribution();
                 } else {
+                    alreadyPlayedToday = false;
+                    scoreSubmitted = false;
                     loaded = true;
+                    game.status = "playing";
                 }
 
                 game.moves = existing?.moves ?? [];
@@ -293,37 +299,148 @@
     let innerWidth = $state(0);
     let isMobile = $derived(innerWidth < 768);
     
-    let menuMode = $state<boolean>(false);
-    let focusedMenu = $state<boolean>(false);
-    let finished = $state<boolean>(false);
-    let renderDialogue = $state<boolean>(false);
 
-    const TIP_DIALOGUE: DialogueTree = {
-        tip: {
-            id: "tip",
+    type TourStep = {
+        ref: HTMLElement | undefined;
+        dialogueKey: string;
+        customAR?: [number, number];
+    };
+
+    let editorNavRef = $state<HTMLDivElement>();
+    let tutorialNavRef = $state<HTMLDivElement>();
+    let communityNavRef = $state<HTMLDivElement>();
+    let carrotNavRef = $state<HTMLElement>();
+
+    const TOUR_DIALOGUE: DialogueTree = {
+        editor: {
+            id: "editor",
             expression: "happy.png",
             name: "mini",
-            text: "view the editor and tutorial from this menu!"
+            text: "build your own puzzles in the editor!"
+        },
+        tutorial: {
+            id: "tutorial",
+            expression: "happy.png",
+            name: "mini",
+            text: "or view the tutorial!"
+        },
+        community: {
+            id: "community",
+            expression: "happy.png",
+            name: "mini",
+            text: "join the community and submit your level!"
+        },
+        carrot: {
+            id: "carrot",
+            expression: "neutral.png",
+            name: "mini",
+            text: "finally, you can navigate to previous/future days by clicking on either end of the carrot.",
+            pausePoints: [
+                {
+                    index: 8,
+                    ms: 350
+                }
+            ]
+        }
+    };
+
+    let tourSteps = $derived<TourStep[]>([
+        { ref: editorNavRef, dialogueKey: "editor", customAR: [1, 1] },
+        { ref: tutorialNavRef, dialogueKey: "tutorial", customAR: [1, 1] },
+        { ref: communityNavRef, dialogueKey: "community", customAR: [1, 1] },
+        { ref: carrotNavRef, dialogueKey: "carrot" }
+    ]);
+
+    const FOCUS_PADDING = 4;
+
+    let menuMode = $state<boolean>(false);
+    let tourIndex = $state<number>(-1);
+    let dialogueOpenedForStep = $state<boolean>(false);
+    let finished = $state<boolean>(false);
+    let renderDialogue = $state<boolean>(false);
+    let focusRect = $state<{ top: number; left: number; width: number; height: number }>();
+
+    let currentStep = $derived<TourStep | undefined>(tourIndex >= 0 ? tourSteps[tourIndex] : undefined);
+
+    let focusStyle = $derived(
+        focusRect
+            ? `top: ${focusRect.top}px; left: ${focusRect.left}px; height: ${focusRect.height}px; 
+                ${currentStep?.customAR 
+                ? `aspect-ratio: ${currentStep.customAR[0]} / ${currentStep.customAR[1]}` 
+                : `width: ${focusRect.width}px;`}`
+            : `top: 0px; left: 0px; width: 100vw; height: 100vh;`
+    );
+
+    function measureFocusRect() {
+        const el = currentStep?.ref;
+        if (!el) {
+            focusRect = undefined;
+            return;
+        }
+
+        const r = el.getBoundingClientRect();
+        focusRect = {
+            top: r.top - FOCUS_PADDING,
+            left: r.left - FOCUS_PADDING,
+            width: r.width + FOCUS_PADDING * 2,
+            height: r.height + FOCUS_PADDING * 2
+        };
+    }
+
+    function showStepDialogue(delay: number) {
+        setTimeout(() => {
+            measureFocusRect();
+            dialogueOpenedForStep = true;
+            renderDialogue = true;
+        }, delay);
+    }
+
+    function startTour() {
+        if (tourSteps.length === 0) return;
+        menuMode = true;
+        tourIndex = 0;
+        showStepDialogue(500);
+    }
+
+    function advanceTour() {
+        const next = tourIndex + 1;
+
+        if (next < tourSteps.length) {
+            tourIndex = next;
+            showStepDialogue(300);
+        } else {
+            tourIndex = -1;
+            focusRect = undefined;
+            setTimeout(() => (menuMode = false), 1000);
         }
     }
 
     $effect(() => {
-        if (!showIntroModal && !hasSeenTips) {
-            menuMode = true;
+        if (!showIntroModal && tourIndex === -1 && !menuMode && !hasSeenTips) {
+            startTour();
+            hasSeenTips = true;
+        }
+    });
 
-            setTimeout(() => {
-                focusedMenu = true;
-                renderDialogue = true;
-            }, 500);
-            
+
+    $effect(() => {
+        if (dialogueOpenedForStep && !renderDialogue) {
+            dialogueOpenedForStep = false;
+            advanceTour();
         }
     });
 
     $effect(() => {
-        if (!renderDialogue && focusedMenu) {
-            focusedMenu = false;
-            setTimeout(() => menuMode = false, 1000);
-        }
+        if (!menuMode || !currentStep) return;
+
+        const reposition = () => measureFocusRect();
+        window.addEventListener("resize", reposition);
+        window.addEventListener("scroll", reposition, true);
+
+        return () => {
+            window.removeEventListener("resize", reposition);
+            window.removeEventListener("scroll", reposition, true);
+        };
     });
 
     let scoreMode = $state<boolean>(true);
@@ -420,20 +537,27 @@
     </div>
 
     <div class="nav">
-        <Navlink href="/editor" title="editor">
-            <svg fill="white" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><path d="M474.1 398.2L289.1 212c18.3-47 8.1-102.3-30.5-141.1C217.9 30 156.9 21.8 108.1 44.3l87.4 88-61 61.4-89.5-88c-24.3 49-14.1 110.4 26.5 151.3 38.6 38.9 93.5 49.1 140.3 30.7l185 186.2c8.1 8.2 20.3 8.2 28.5 0l46.8-47c10.2-8.3 10.2-22.6 2-28.7z"></path></svg>
-        </Navlink>
+        <div class="nav-item" bind:this={editorNavRef}>
+            <Navlink href="/editor" title="editor">
+                <svg fill="white" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><path d="M474.1 398.2L289.1 212c18.3-47 8.1-102.3-30.5-141.1C217.9 30 156.9 21.8 108.1 44.3l87.4 88-61 61.4-89.5-88c-24.3 49-14.1 110.4 26.5 151.3 38.6 38.9 93.5 49.1 140.3 30.7l185 186.2c8.1 8.2 20.3 8.2 28.5 0l46.8-47c10.2-8.3 10.2-22.6 2-28.7z"></path></svg>
+            </Navlink>
+        </div>
 
-        <Navlink href="/tutorial" title="tutorial">
-            <svg fill="white" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><path d="M256 76c48.1 0 93.3 18.7 127.3 52.7S436 207.9 436 256s-18.7 93.3-52.7 127.3S304.1 436 256 436c-48.1 0-93.3-18.7-127.3-52.7S76 304.1 76 256s18.7-93.3 52.7-127.3S207.9 76 256 76m0-28C141.1 48 48 141.1 48 256s93.1 208 208 208 208-93.1 208-208S370.9 48 256 48z"></path><path d="M256.7 160c37.5 0 63.3 20.8 63.3 50.7 0 19.8-9.6 33.5-28.1 44.4-17.4 10.1-23.3 17.5-23.3 30.3v7.9h-34.7l-.3-8.6c-1.7-20.6 5.5-33.4 23.6-44 16.9-10.1 24-16.5 24-28.9s-12-21.5-26.9-21.5c-15.1 0-26 9.8-26.8 24.6H192c.7-32.2 24.5-54.9 64.7-54.9zm-26.3 171.4c0-11.5 9.6-20.6 21.4-20.6 11.9 0 21.5 9 21.5 20.6s-9.6 20.6-21.5 20.6-21.4-9-21.4-20.6z"></path></svg>
-        </Navlink>
+        <div class="nav-item" bind:this={tutorialNavRef}>
+            <Navlink href="/tutorial" title="tutorial">
+                <svg fill="white" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><path d="M256 76c48.1 0 93.3 18.7 127.3 52.7S436 207.9 436 256s-18.7 93.3-52.7 127.3S304.1 436 256 436c-48.1 0-93.3-18.7-127.3-52.7S76 304.1 76 256s18.7-93.3 52.7-127.3S207.9 76 256 76m0-28C141.1 48 48 141.1 48 256s93.1 208 208 208 208-93.1 208-208S370.9 48 256 48z"></path><path d="M256.7 160c37.5 0 63.3 20.8 63.3 50.7 0 19.8-9.6 33.5-28.1 44.4-17.4 10.1-23.3 17.5-23.3 30.3v7.9h-34.7l-.3-8.6c-1.7-20.6 5.5-33.4 23.6-44 16.9-10.1 24-16.5 24-28.9s-12-21.5-26.9-21.5c-15.1 0-26 9.8-26.8 24.6H192c.7-32.2 24.5-54.9 64.7-54.9zm-26.3 171.4c0-11.5 9.6-20.6 21.4-20.6 11.9 0 21.5 9 21.5 20.6s-9.6 20.6-21.5 20.6-21.4-9-21.4-20.6z"></path></svg>
+            </Navlink>
+        </div>
 
-        <Navlink href="https://discord.gg/dSDRre7nC" title="discord">
-            <svg fill="white" viewBox="0 0 640 512" xmlns="http://www.w3.org/2000/svg"><path d="M524.531,69.836a1.5,1.5,0,0,0-.764-.7A485.065,485.065,0,0,0,404.081,32.03a1.816,1.816,0,0,0-1.923.91,337.461,337.461,0,0,0-14.9,30.6,447.848,447.848,0,0,0-134.426,0,309.541,309.541,0,0,0-15.135-30.6,1.89,1.89,0,0,0-1.924-.91A483.689,483.689,0,0,0,116.085,69.137a1.712,1.712,0,0,0-.788.676C39.068,183.651,18.186,294.69,28.43,404.354a2.016,2.016,0,0,0,.765,1.375A487.666,487.666,0,0,0,176.02,479.918a1.9,1.9,0,0,0,2.063-.676A348.2,348.2,0,0,0,208.12,430.4a1.86,1.86,0,0,0-1.019-2.588,321.173,321.173,0,0,1-45.868-21.853,1.885,1.885,0,0,1-.185-3.126c3.082-2.309,6.166-4.711,9.109-7.137a1.819,1.819,0,0,1,1.9-.256c96.229,43.917,200.41,43.917,295.5,0a1.812,1.812,0,0,1,1.924.233c2.944,2.426,6.027,4.851,9.132,7.16a1.884,1.884,0,0,1-.162,3.126,301.407,301.407,0,0,1-45.89,21.83,1.875,1.875,0,0,0-1,2.611,391.055,391.055,0,0,0,30.014,48.815,1.864,1.864,0,0,0,2.063.7A486.048,486.048,0,0,0,610.7,405.729a1.882,1.882,0,0,0,.765-1.352C623.729,277.594,590.933,167.465,524.531,69.836ZM222.491,337.58c-28.972,0-52.844-26.587-52.844-59.239S193.056,219.1,222.491,219.1c29.665,0,53.306,26.82,52.843,59.239C275.334,310.993,251.924,337.58,222.491,337.58Zm195.38,0c-28.971,0-52.843-26.587-52.843-59.239S388.437,219.1,417.871,219.1c29.667,0,53.307,26.82,52.844,59.239C470.715,310.993,447.538,337.58,417.871,337.58Z"></path></svg>
-        </Navlink>
+        <div class="nav-item" bind:this={communityNavRef}>
+            <Navlink href="https://discord.gg/dSDRre7nC" title="discord">
+                <svg fill="white" viewBox="0 0 640 512" xmlns="http://www.w3.org/2000/svg"><path d="M524.531,69.836a1.5,1.5,0,0,0-.764-.7A485.065,485.065,0,0,0,404.081,32.03a1.816,1.816,0,0,0-1.923.91,337.461,337.461,0,0,0-14.9,30.6,447.848,447.848,0,0,0-134.426,0,309.541,309.541,0,0,0-15.135-30.6,1.89,1.89,0,0,0-1.924-.91A483.689,483.689,0,0,0,116.085,69.137a1.712,1.712,0,0,0-.788.676C39.068,183.651,18.186,294.69,28.43,404.354a2.016,2.016,0,0,0,.765,1.375A487.666,487.666,0,0,0,176.02,479.918a1.9,1.9,0,0,0,2.063-.676A348.2,348.2,0,0,0,208.12,430.4a1.86,1.86,0,0,0-1.019-2.588,321.173,321.173,0,0,1-45.868-21.853,1.885,1.885,0,0,1-.185-3.126c3.082-2.309,6.166-4.711,9.109-7.137a1.819,1.819,0,0,1,1.9-.256c96.229,43.917,200.41,43.917,295.5,0a1.812,1.812,0,0,1,1.924.233c2.944,2.426,6.027,4.851,9.132,7.16a1.884,1.884,0,0,1-.162,3.126,301.407,301.407,0,0,1-45.89,21.83,1.875,1.875,0,0,0-1,2.611,391.055,391.055,0,0,0,30.014,48.815,1.864,1.864,0,0,0,2.063.7A486.048,486.048,0,0,0,610.7,405.729a1.882,1.882,0,0,0,.765-1.352C623.729,277.594,590.933,167.465,524.531,69.836ZM222.491,337.58c-28.972,0-52.844-26.587-52.844-59.239S193.056,219.1,222.491,219.1c29.665,0,53.306,26.82,52.843,59.239C275.334,310.993,251.924,337.58,222.491,337.58Zm195.38,0c-28.971,0-52.843-26.587-52.843-59.239S388.437,219.1,417.871,219.1c29.667,0,53.307,26.82,52.844,59.239C470.715,310.993,447.538,337.58,417.871,337.58Z"></path></svg>
+            </Navlink>
+        </div>
     </div>
 
-    <header>
+
+    <header bind:this={carrotNavRef}>
         <div class="title">
             {#each title as char, i}
                 <span class="tchar" style={`
@@ -536,18 +660,15 @@
 </div>
 
 {#if menuMode}
-    <div class={`focus-container${focusedMenu ? " focused" : ""}`}>
-
-    </div>
+    <div class="focus-container" style={focusStyle}></div>
 {/if}
 
-{#if renderDialogue}
+{#if renderDialogue && currentStep}
     <Dialogue
         bind:renderDialogue
-        dialogue={TIP_DIALOGUE}
-        dialogueKey={"tip"}
+        dialogue={TOUR_DIALOGUE}
+        dialogueKey={currentStep.dialogueKey}
         bind:finished
-        audioEnabled={false}
     />
 {/if}
 
@@ -692,18 +813,15 @@
     }
 
     .focus-container {
-        position: absolute;
-        top: 0; left: 0;
+        position: fixed;
         z-index: 55;
         backdrop-filter: brightness(2);
-        width: 100vw; height: 100vh;
-    
+
         transition: all 0.5s ease-in-out;
     }
 
-    .focused {
-        width: 65px !important; 
-        height: 115px !important;
+    .nav-item {
+        display: block;
     }
 
     .wave-background {

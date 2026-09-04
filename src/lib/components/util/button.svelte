@@ -65,9 +65,15 @@
             filter: grayscale(1) brightness(0.5);
         }
 
+        &:hover {
+            scale: 1.1;
+        }
+
         @media screen and (max-width: 768px) {
             font-size: 0.9rem;
         }
+
+        transition: scale 0.3s cubic-bezier(0.075, 0.82, 0.165, 1), filter 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
     }
 
 

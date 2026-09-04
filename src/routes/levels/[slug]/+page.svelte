@@ -12,7 +12,6 @@
     import carrot_end from "$lib/assets/images/carrot-end.png";
     import Navlink from "$lib/components/util/navlink.svelte";
     import Winmodal from "$lib/components/util/winmodal.svelte";
-    import type { LevelData } from "$lib/data/leveldata";
     import type { PageData } from './$types';
 
     let { data }: { data: PageData } = $props();
