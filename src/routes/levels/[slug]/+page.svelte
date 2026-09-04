@@ -18,7 +18,7 @@
     let { data }: { data: PageData } = $props();
 
     let gameParams = $derived<GameParams>([
-        data.level.board, data.level.a, data.level.b, data.level.title, data.level.day, data.level.author
+        data.level.board, data.level.a, data.level.b, data.level.title, data.level.day, data.level.author, data.level.carrots
     ]);
 
     let tileSheet = $state<HTMLImageElement>();
