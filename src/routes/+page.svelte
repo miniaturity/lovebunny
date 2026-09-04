@@ -19,17 +19,15 @@
     import Dialogue, { type DialogueTree } from "$lib/components/game/dialogue.svelte";
     import { goto } from "$app/navigation";
 
-    import { page } from "$app/state";
-
     let { data } = $props();
-    let gameParams: GameParams = $derived([data.daily.board, data.daily.a, data.daily.b, data.daily.title, data.daily.day, data.daily.author]);
+    let gameParams: GameParams = $derived([data.daily.board, data.daily.a, data.daily.b, data.daily.title, data.daily.day, data.daily.author, data.daily.carrots]);
+
 
     let tileSheet = $state<HTMLImageElement>();
     let characterSheet = $state<HTMLImageElement>();
 
     let game = $derived<Game>(new Game(...gameParams));
     let playbackGame = $derived<Game>(new Game(...gameParams));
-    let moves = $derived<MoveName[]>(game.moves);
     let bestGame = $derived<Game>(new Game(...gameParams));
 
     let isNewUser = $state<boolean>(false);
