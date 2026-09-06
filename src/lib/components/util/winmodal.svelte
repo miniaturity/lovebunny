@@ -69,7 +69,7 @@
 ${"🥕".repeat(getCarrotCount())}
 ${isTuye ? "\n🌈 TUYE mode active" : ""} ${game.getScore() === game.solution.score ? `\n🐰 PERFECT game!\n` : ""}
 ${!isUserMade && percentile ? `placed ${percentile.direction === "top" ? "top" : "bottom"} ${percentile.percent}% of ${totalPlayers} 🐇` : ``}
-bunniesin.love${isUserMade ? `/levels/${id}` : ``}  `;
+<bunniesin.love${isUserMade ? `/levels/${id}` : ``}>  `;
 
         try {
             await navigator.clipboard.writeText(text);
