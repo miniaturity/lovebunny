@@ -133,6 +133,7 @@ export class Water extends RuleTile {
                     { x: 8, y: 2 }
                 ],
                 initRotation: 90,
+                rotations: true
             },
             {
                 // inner corner + wall (non-north)

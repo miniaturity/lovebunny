@@ -280,6 +280,8 @@
             .catch(() => {
                 importError = "Could not read that file.";
             });
+
+        if (importError) alert(importError);
     }
 
     function clearEditor() {

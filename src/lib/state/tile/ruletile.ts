@@ -5,7 +5,8 @@ import { AnimatedTile } from "./animatedtile";
 // 1 - tile must match
 // 0 - tile must not match
 // null - dont care
-export type Match = 1 | 0 | null;
+// string(id) - id of tile adjacent
+export type Match = 1 | 0 | null | string;
 
 export type Rotation = 0 | 90 | 180 | 270;
 
