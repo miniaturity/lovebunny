@@ -5,7 +5,6 @@ import { solveLevelAsync, SCORE_PER_CARROT, type SolveResult } from "./solver";
 export type MoveName = "up" | "down" | "left" | "right";
 export type GameStatus = 'playing' | 'won' | 'menu' | 'playback';
 
-
 export const MOVE_DICT: Record<MoveName, { x: Move, y: Move }> = {
     "up": { x: 0, y: -1 }, // i know dis wrong i messed up somewhere but whatever
     "down": { x: 0, y: 1 },
@@ -44,6 +43,11 @@ export class Game {
     public carrotScore = $state<number>(0);
     public carrots = $state<CarrotEntity[]>([]);
 
+    private readonly initBoard: number[][];
+    private readonly initA: Position;
+    private readonly initB: Position;
+    private readonly initCarrotPositions?: Position[];
+
     constructor(
         initBoard: number[][],
         a: Position,
@@ -53,22 +57,54 @@ export class Game {
         public readonly author: string,
         carrotPositions?: Position[]
     ) {
-        this.board = mapToBoard(initBoard);
+        this.initBoard = initBoard;
+        this.initA = a;
+        this.initB = b;
+        this.initCarrotPositions = carrotPositions;
 
-        this.a.pos = { x: a.x + BOARD_BORDER, y: a.y + BOARD_BORDER };
-        this.b.pos = { x: b.x + BOARD_BORDER, y: b.y + BOARD_BORDER };
+        this.initialize();
+    }
 
-        solveLevelAsync(initBoard, a, b, carrotPositions).result.then((solution) => {
+    private initialize() {
+        this.pushSnapshot();
+        this.board = mapToBoard(this.initBoard);
+
+        this.a.pos = { x: this.initA.x + BOARD_BORDER, y: this.initA.y + BOARD_BORDER };
+        this.a.facing = 'right';
+        this.a.alive = true;
+
+        this.b.pos = { x: this.initB.x + BOARD_BORDER, y: this.initB.y + BOARD_BORDER };
+        this.b.facing = 'right';
+        this.b.alive = true;
+
+        this.hearts.pos = { x: this.initA.x + BOARD_BORDER, y: this.initA.y + BOARD_BORDER };
+        this.hearts.facing = 'right';
+        this.hearts.alive = true;
+
+        this.status = 'menu';
+        this.moves = [];
+        this.solution = null;
+        this.lastMove = undefined;
+        this.undone = false;
+        this.carrotScore = 0;
+        this.carrots = [];
+
+        solveLevelAsync(this.initBoard, this.initA, this.initB, this.initCarrotPositions).result.then((solution) => {
             this.solution = solution;
         });
 
-        if (carrotPositions) {
-            carrotPositions.forEach((pos: Position, idx: number) => {
+        if (this.initCarrotPositions) {
+            this.initCarrotPositions.forEach((pos: Position, idx: number) => {
                 this.carrots.push(
                     new CarrotEntity(idx, "carrot", { x: pos.x + BOARD_BORDER, y: pos.y + BOARD_BORDER }, "right", true, true)
                 );
             });
         }
+    }
+
+    
+    public reset() {
+        this.initialize();
     }
 
     public getScore(): number {
@@ -115,6 +151,10 @@ export class Game {
         });
     }
 
+    private isSamePosition(a: Position,  b: Position) {
+        return a.x === b.x && a.y === b.y;
+    }
+
     public move(dx: Move, dy: Move) {
         if ((this.status !== 'playing' && this.status !== "playback") || !this.solution) return;
 
@@ -128,17 +168,22 @@ export class Game {
             this.b.facing = direction === "left" ? "right" : "left";
         }
 
+        const lastA = $state.snapshot(this.a.pos), lastB = $state.snapshot(this.b.pos);
+
         this.moveEntity(this.a, dx, dy);
         this.moveEntity(this.b, -dx as Move, -dy as Move);
+
+        if (this.isSamePosition(lastA, this.a.pos) && this.isSamePosition(lastB, this.b.pos)) {
+            this._history.pop();
+            return;
+        }
 
         this.checkCarrotPickup(this.a);
         this.checkCarrotPickup(this.b);
 
         this.hearts.pos = { x: (this.a.pos.x + this.b.pos.x) / 2, y: (this.a.pos.y + this.b.pos.y) / 2 };
 
-        // if they let me use objects as a key it would be cool and i wouldnt have to do this 
-        // WARNING: BS AHEAD
-        const move: MoveName =((Object.keys(MOVE_DICT) as Array<keyof typeof MOVE_DICT>).find((key) => MOVE_DICT[key].x === dx && MOVE_DICT[key].y === dy))!;
+        const move: MoveName = ((Object.keys(MOVE_DICT) as Array<keyof typeof MOVE_DICT>).find((key) => MOVE_DICT[key].x === dx && MOVE_DICT[key].y === dy))!;
         this.moves.push(move);
         this.triggerGlobalOnMove();
         

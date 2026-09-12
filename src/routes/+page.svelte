@@ -2,7 +2,8 @@
     import Board from "$lib/components/game/board.svelte";
     import ts from "$lib/assets/sprites/spritesheet.png";
     import cs from "$lib/assets/sprites/charactersheet.png";
-    import { Game, MOVE_DICT, type GameParams, type MoveName } from "$lib/state/game/game.svelte.js";
+    import type { GameParams, MoveName } from "$lib/state/game/game.svelte.js";
+    import { gameManager, TILE_SIZE } from "$lib/state/game/game-manager.svelte.js";
     import { getContext, onMount } from "svelte";
     import { hasVisited, hasCompletedTip } from "$lib/state/store";
     import Modal from "$lib/components/util/modal.svelte";
@@ -15,42 +16,29 @@
     import Navlink from "$lib/components/util/navlink.svelte";
     import Winmodal from "$lib/components/util/winmodal.svelte";
     import MobileDeck from "$lib/components/game/mobileDeck.svelte";
-    import { fetchScoreDistribution, fetchMyScore, submitScore } from "$lib/api/scores";
     import Dialogue, { type DialogueTree } from "$lib/components/game/dialogue.svelte";
-    import { goto } from "$app/navigation";
 
     let { data } = $props();
     let gameParams: GameParams = $derived([data.daily.board, data.daily.a, data.daily.b, data.daily.title, data.daily.day, data.daily.author, data.daily.carrots]);
 
+    
+    onMount(() => {
+        gameManager.initialize(gameParams, data.today, data.serverToday);
+    });
 
     let tileSheet = $state<HTMLImageElement>();
     let characterSheet = $state<HTMLImageElement>();
 
-    let game = $derived<Game>(new Game(...gameParams));
-    let playbackGame = $derived<Game>(new Game(...gameParams));
-    let bestGame = $derived<Game>(new Game(...gameParams));
-
-    let isNewUser = $state<boolean>(false);
-    let scoreSubmitted = $state(false);
     let canShowModal = $state<boolean>(true);
-    let showIntroModal = $derived<boolean>(isNewUser);
-    let showWinModal = $derived<boolean>(game.status === "won" && scoreSubmitted);
-    let showConfirmModal = $derived<boolean>(game.status === "won" && !scoreSubmitted);
-    let confirmedSubmission = $state<boolean>(false);
-
-    const TILE_SIZE = 16;
 
     const WAVE_COUNT = 24;
     let waveTiles = $state<{ top: number; left: number }[]>([]);
     let gameEl = $state<HTMLDivElement>();
     let tileDisplaySize = $state(TILE_SIZE);
 
-    let loaded = $state<boolean>(false);
-    let hasSeenTips = $state<boolean>(true);
-
     function updateTileDisplaySize() {
-        if (!gameEl) return;
-        const cols = game.board[0]?.length || 1;
+        if (!gameEl || !gameManager.game) return;
+        const cols = gameManager.game.board[0]?.length || 1;
         tileDisplaySize = gameEl.clientWidth / cols;
     }
 
@@ -61,19 +49,13 @@
         characterSheet = new Image();
         characterSheet.src = cs;
 
-        if (!$hasVisited) {
-            isNewUser = true;
-            $hasVisited = true;
-        } else {
-            game.status = "playing";
-        }
+        gameManager.setReturningStatus($hasVisited);
+        $hasVisited = true;
 
         if (!$hasCompletedTip) {
-            hasSeenTips = false;
+            gameManager.hasSeenTips = false;
             $hasCompletedTip = true;
         }
-        
-
 
         waveTiles = Array.from({ length: WAVE_COUNT }, () => ({
             top: Math.random() * 100,
@@ -91,214 +73,14 @@
         };
     });
 
-    let today = $derived<string>(data.today);
-    let alreadyPlayedToday = $state(false); 
-    let distribution = $state<Record<string, number>>({});
-    let totalPlayers = $state(0);
-
-    $effect(() => {
-        today = data.today;
-    });
-
-    async function loadDistribution() {
-        try {
-            console.log(today);
-            const result = await fetchScoreDistribution(today);
-            distribution = result.distribution;
-            totalPlayers = result.totalPlayers;
-        } catch (err) {
-            console.error("Failed to load dist.: " + err);
-        }
-    }
-
-    async function replayLockedSolution(existingMoves: MoveName[]) {
-        playbackGame = new Game(...gameParams);
-        playbackGame.status = "playback"; 
-        game.status = "playback";
-
-        for (const move of existingMoves) {
-            await sleep(150);
-            playmove(move);
-        }
-
-        playbackGame.status = "won"; 
-        game.status = "won"; 
-    }
-
-    onMount(() => {
-
-        fetchMyScore(today).then(async (existing) => {
-            if (existing) {
-                alreadyPlayedToday = true;
-                scoreSubmitted = true; 
-                loaded = true;
-                await replayLockedSolution(existing.moves);
-                loadDistribution();
-            } else {
-                loaded = true;
-            }
-
-            game.moves = existing?.moves ?? [];
-        });
-
-    });
-
-    let submittingScore = $state(false);
-
-    $effect(() => {
-        if (game.status === "won" && !scoreSubmitted && !submittingScore && confirmedSubmission) {
-            submittingScore = true;
-            submitScore(today, game.moves).then((result) => {
-                submittingScore = false;
-
-                if (result.ok || result.alreadyPlayed) {
-                    scoreSubmitted = true;
-                    loadDistribution();
-                } else {
-                    confirmedSubmission = false;
-                    alert("Couldn't submit your score. Don't try to cheat!");
-                }
-            });
-        }
-    });
-
-    const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-    
-    async function playback(moves: MoveName[]) {
-        if (game.status !== "won") return;
-        game.status = "playback";
-        playbackGame = new Game(...gameParams);
-        playbackGame.status = "playback";
-
-        for (let i = 0; i < moves.length; i++) {
-            await sleep(250);
-            playmove(moves[i]);
-        }
-    }
-    
     function mobileMove(move: MoveName) {
-        const { x, y } = MOVE_DICT[move];
-        game.move(x, y);
-    }
-
-    function playmove(move: MoveName) {
-        const { x, y } = MOVE_DICT[move];
-        playbackGame.move(x, y);
-    }
-
-    function play() {
-        game.status = "playing";
-        showIntroModal = false;
-        canShowModal = true;
-    }
-
-    function reset(playing: boolean = true) {
-        if (alreadyPlayedToday || (game.status === "won" && scoreSubmitted)) return;
-        
-        if (game.status === "won" && (bestGame.moves.length === 0 || bestGame.getScore() > game.getScore())) {
-            bestGame.moves = [...game.moves];
-            bestGame.a = { ...game.a };
-            bestGame.b = { ...game.b };
-            
-        }
-
-        game = new Game(...gameParams);
-        if (playing) game.status = "playing";
-    }
-
-    function setToBest() {
-        if (bestGame.moves.length === 0) return;
-
-        game.moves = [...bestGame.moves.slice(0, -1)];
-        game.a = { ...bestGame.a };
-        game.b = { ...bestGame.b };
-        
-        let n = bestGame.moves.length;
-        game.move(MOVE_DICT[bestGame.moves[n-1]].x, MOVE_DICT[bestGame.moves[n-1]].y)
-        
-        game.status = "won";
-        
-        
-    }
-
-    function confirmSubmission() {
-        confirmedSubmission = true;
-    }
-
-    const closeModal = () => { if (game.status === "menu") game.status = "playing"; }
-
-    function shiftDate(dateStr: string, deltaDays: number): string {
-        const t = new Date(`${dateStr}T00:00:00.000Z`).getTime();
-        return new Date(t + deltaDays * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-    }
-
-    let canGoNext = $derived(today < data.serverToday || game.status !== "playback");
-
-    async function lastDay() {
-        if (game.day === 1 || !canGoNext) return;
-
-        const target = shiftDate(today, -1);
-        try {
-            await goto(`/?date=${target}`);
-
-            fetchMyScore(today).then(async (existing) => {
-                if (existing) {
-                    alreadyPlayedToday = true;
-                    scoreSubmitted = true; 
-                    loaded = true;
-                    await replayLockedSolution(existing.moves);
-                    loadDistribution();
-                } else {
-                    alreadyPlayedToday = false;
-                    scoreSubmitted = false;
-                    loaded = true;
-                    game.status = "playing";
-                }
-
-                game.moves = existing?.moves ?? [];
-            });
-            
-        } catch (err) {
-            console.error(err);
-            goto("/");
-        }
-    }
-
-    async function nextDay() {
-        if (!canGoNext) return;
-
-        const target = shiftDate(today, 1);
-        try {
-            await goto(`/?date=${target}`);
-
-            fetchMyScore(today).then(async (existing) => {
-                if (existing) {
-                    alreadyPlayedToday = true;
-                    scoreSubmitted = true; 
-                    loaded = true;
-                    await replayLockedSolution(existing.moves);
-                    loadDistribution();
-                } else {
-                    alreadyPlayedToday = false;
-                    scoreSubmitted = false;
-                    loaded = true;
-                    game.status = "playing";
-                }
-
-                game.moves = existing?.moves ?? [];
-            });
-            
-        } catch (err) {
-            console.error(err);
-            goto("/");
-        }
+        gameManager.mobileMove(move);
     }
 
     const title = "bunniesin.love";
 
     let innerWidth = $state(0);
     let isMobile = $derived(innerWidth < 768);
-    
 
     type TourStep = {
         ref: HTMLElement | undefined;
@@ -416,12 +198,11 @@
     }
 
     $effect(() => {
-        if (!showIntroModal && tourIndex === -1 && !menuMode && !hasSeenTips) {
+        if (!gameManager.showIntroModal && tourIndex === -1 && !menuMode && !gameManager.hasSeenTips) {
             startTour();
-            hasSeenTips = true;
+            gameManager.hasSeenTips = true;
         }
     });
-
 
     $effect(() => {
         if (dialogueOpenedForStep && !renderDialogue) {
@@ -442,9 +223,6 @@
             window.removeEventListener("scroll", reposition, true);
         };
     });
-
-    let scoreMode = $state<boolean>(true);
-
 </script>
 
 <svelte:head>
@@ -453,7 +231,7 @@
 
 <svelte:window bind:innerWidth />
 
-<Modal bind:showModal={showConfirmModal} bind:canShowModal onClose={closeModal} canClose={false}>
+<Modal bind:showModal={gameManager.showConfirmModal} bind:canShowModal onClose={() => gameManager.closeModal()} canClose={false}>
     <div class="modal-content">
         <img src={love} alt=""/>
         <header style="display: flex; flex-direction: row;">
@@ -465,18 +243,18 @@
         </p>
 
         <div class="buttons">
-            <Button onclick={reset} style="background-color: #c20202;">
+            <Button onclick={() => gameManager.reset()} style="background-color: #c20202;">
                 Reset
             </Button>
 
-            <Button onclick={confirmSubmission}>
+            <Button onclick={() => gameManager.confirmSubmission()}>
                 Confirm
             </Button>
         </div>
     </div>
 </Modal>
 
-<Modal bind:showModal={showIntroModal} bind:canShowModal onClose={closeModal}>
+<Modal bind:showModal={gameManager.showIntroModal} bind:canShowModal onClose={() => gameManager.closeModal()}>
     <div class="modal-content">
         <img src={love} alt=""/>
         <header>
@@ -501,7 +279,7 @@
             are tethered, so they make the same moves.
         </p>
         <div class="buttons">
-            <Button onclick={play}>
+            <Button onclick={() => gameManager.play()}>
                 Play
             </Button>
 
@@ -512,9 +290,14 @@
     </div>
 </Modal>
 
-<Modal bind:showModal={showWinModal} bind:canShowModal>
-    {#if game}
-        <Winmodal {game} {playback} {distribution} {totalPlayers} />
+<Modal bind:showModal={gameManager.showWinModal} bind:canShowModal>
+    {#if gameManager.game}
+        <Winmodal
+            game={gameManager.game}
+            playback={(moves) => gameManager.playback(moves)}
+            distribution={gameManager.distribution}
+            totalPlayers={gameManager.totalPlayers}
+        />
     {/if}
 </Modal>
 
@@ -566,10 +349,11 @@
                 --col2: var(--lpink);`}>{char}</span>
             {/each}
         </div>
-        {#if game}
+        {#if gameManager.game}
+            {@const game = gameManager.game}
             <div class="subtitle">
                 <div class="day">
-                    <button onclick={lastDay} disabled={game.day === 1} class="carrot-left">
+                    <button onclick={() => gameManager.lastDay()} disabled={game.day === 1} class="carrot-left">
                         <img alt="" src={carrot_start}/>
                     </button>
                     <div class="day-text">
@@ -577,7 +361,7 @@
                             <span class="char" style={`--index: ${i}`}>{char === ' ' ? '\u00A0' : char}</span>
                         {/each}
                     </div>
-                    <button onclick={nextDay} disabled={!canGoNext} class="carrot-right">
+                    <button onclick={() => gameManager.nextDay()} disabled={!gameManager.canGoNext} class="carrot-right">
                         <img alt="" src={carrot_end}/>
                     </button>
 
@@ -599,57 +383,61 @@
         {/if}
     </header>
 
-    <div class="game" bind:this={gameEl}>
-        {#if tileSheet && characterSheet}
-           <Board 
-                game={(game.status === "playback" || alreadyPlayedToday) ? playbackGame : game} 
-                {tileSheet} 
-                {characterSheet} 
-                {loaded}
-                isTuye={getContext('isTuye')}
-            />
-        {/if}
-        <div class="game-info">
-            <div class="moves">
-                <button class="score" onclick={() => scoreMode = !scoreMode}>
-                    {#if scoreMode}
-                        score: {game.getScore()}
-                    {:else}
-                        moves: {game.moves.length}
+    {#if gameManager.game && gameManager.bestGame}
+        {@const game = gameManager.game}
+        {@const bestGame = gameManager.bestGame}
+        <div class="game" bind:this={gameEl}>
+            {#if tileSheet && characterSheet}
+               <Board 
+                    game={(game.status === "playback" || gameManager.alreadyPlayedToday) ? (gameManager.playbackGame ?? game) : game} 
+                    {tileSheet} 
+                    {characterSheet} 
+                    loaded={gameManager.loaded}
+                    isTuye={getContext('isTuye')}
+                />
+            {/if}
+            <div class="game-info">
+                <div class="moves">
+                    <button class="score" onclick={() => gameManager.scoreMode = !gameManager.scoreMode}>
+                        {#if gameManager.scoreMode}
+                            score: {game.getScore()}
+                        {:else}
+                            moves: {game.moves.length}
+                        {/if}
+                    </button>
+                    {#if bestGame.moves.length !== 0} 
+                        <button class="best" onclick={() => gameManager.setToBest()}>best: {bestGame.getScore()} {"<"}</button>
                     {/if}
-                </button>
-                {#if bestGame.moves.length !== 0} 
-                    <button class="best" onclick={setToBest}>best: {bestGame.getScore()} {"<"}</button>
-                {/if}
-            </div>
+                </div>
 
-            <div class="button-dock">
-                <Button
-                    onclick={() => game.undo()}
-                    style="background-color: var(--carrot-orange);"
-                    disabled={game.undone || game.history.length === 0}
-                >
-                    ↩
-                </Button>
+                <div class="button-dock">
+                    <Button
+                        onclick={() => game.undo()}
+                        style="background-color: var(--carrot-orange);"
+                        disabled={game.undone || game.history.length === 0}
+                    >
+                        ↩
+                    </Button>
 
-                <Button 
-                    onclick={() => reset()} 
-                    style="background-color: var(--reset-red);" className="reset-btn"
-                    disabled={alreadyPlayedToday || game.status !== "playing"}
-                >Reset</Button>
+                    <Button 
+                        onclick={() => gameManager.reset()} 
+                        style="background-color: var(--reset-red);" className="reset-btn"
+                        disabled={gameManager.alreadyPlayedToday || game.status !== "playing"}
+                    >Reset</Button>
 
-                <Button onclick={() => { showWinModal = true; game.status = "won" }} disabled={!scoreSubmitted || game.status === "playback"}>
-                    Stats
-                </Button>
+                    <Button onclick={() => { game.status = "won"; }} disabled={!gameManager.scoreSubmitted || game.status === "playback"}>
+                        Stats
+                    </Button>
+                </div>
             </div>
         </div>
-    </div>
 
 
-    {#if isMobile && game.status === "playing"}
-        <MobileDeck 
-            move={mobileMove}
-        />
+        {#if isMobile && game.status === "playing"}
+            <MobileDeck 
+                move={mobileMove}
+            />
+        {/if}
     {/if}
 
     <div class="meta">
@@ -983,5 +771,4 @@
             transform: translateY(0px);
         }
     }
-
 </style>

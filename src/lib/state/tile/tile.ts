@@ -17,9 +17,7 @@ export abstract class Tile {
     get occupant() { return this._occupant; }
     set occupant(o: Entity | "empty") { this._occupant = o; }
 
-    onLand(e: EntityType, pos: Position, game: Game): void {
-        
-    };
+    onLand?(e: EntityType, pos: Position, game: Game): void;
     onMove?(game: Game): void;
     tick?(game: Game): void;
     abstract getSprite(game: Game, x: number, y: number, timestamp: number): { x: number; y: number };
