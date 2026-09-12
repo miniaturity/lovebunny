@@ -40,7 +40,14 @@ class GameManager {
         (this.today < this.serverToday || this.game?.status !== "playback")
     );
 
-    initialize(gameParams: GameParams, today: string, serverToday: string) {
+    private reload: () => void = () => {};
+
+    initialize(
+        gameParams: GameParams, 
+        today: string, 
+        serverToday: string,
+        reload: () => void
+    ) {
         this.gameParams = gameParams;
         this.today = today;
         this.serverToday = serverToday;
@@ -54,6 +61,8 @@ class GameManager {
         this.confirmedSubmission = false;
         this.submittingScore = false;
         this.loaded = false;
+
+        this.reload = reload ?? (() => {});
 
         void this.loadDayScore();
     }
@@ -203,10 +212,12 @@ class GameManager {
 
     async lastDay() {
         await this.changeDay(-1);
+        this.reload();
     }
 
     async nextDay() {
         await this.changeDay(1);
+        this.reload();
     }
 
     private async changeDay(direction: -1 | 1) {

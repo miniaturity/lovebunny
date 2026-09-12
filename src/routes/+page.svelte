@@ -20,11 +20,14 @@
 
     let { data } = $props();
     let gameParams: GameParams = $derived([data.daily.board, data.daily.a, data.daily.b, data.daily.title, data.daily.day, data.daily.author, data.daily.carrots]);
-
     
     onMount(() => {
-        gameManager.initialize(gameParams, data.today, data.serverToday);
+        gameManager.initialize(gameParams, data.today, data.serverToday, reload);
     });
+
+    function reload(): void {
+        gameManager.initialize(gameParams, data.today, data.serverToday, reload);
+    }
 
     let tileSheet = $state<HTMLImageElement>();
     let characterSheet = $state<HTMLImageElement>();
